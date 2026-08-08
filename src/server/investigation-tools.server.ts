@@ -2,21 +2,38 @@ import { defineTool } from "@open-agent-loops/core";
 import { z } from "zod";
 
 import { SALES_CURRENT, SALES_PREVIOUS, evidenceSignals, topicClusters } from "@/data/demo";
+import { marketSignalSchema, topicClusterSchema } from "@/types/investigation-api";
 
-const marketSignalsFixture = {
+export const marketSignalsObservationSchema = z.object({
+  conversationsAnalyzed: z.number().int().nonnegative(),
+  topicClusters: z.array(topicClusterSchema),
+  negativeSentimentChangePct: z.number(),
+  representativeEvidence: z.array(marketSignalSchema),
+});
+
+export const salesMetricsObservationSchema = z.object({
+  previousSales: z.number(),
+  currentSales: z.number(),
+  changePct: z.number(),
+});
+
+export type MarketSignalsObservation = z.infer<typeof marketSignalsObservationSchema>;
+export type SalesMetricsObservation = z.infer<typeof salesMetricsObservationSchema>;
+
+const marketSignalsFixture = marketSignalsObservationSchema.parse({
   conversationsAnalyzed: 142,
   topicClusters,
   negativeSentimentChangePct: 36,
   representativeEvidence: evidenceSignals.filter((signal) =>
     ["reddit", "x", "linkedin"].includes(signal.source),
   ),
-};
+});
 
-const salesMetricsFixture = {
+const salesMetricsFixture = salesMetricsObservationSchema.parse({
   previousSales: SALES_PREVIOUS,
   currentSales: SALES_CURRENT,
   changePct: -11,
-};
+});
 
 export const searchMarketSignalsTool = defineTool({
   name: "search_market_signals",

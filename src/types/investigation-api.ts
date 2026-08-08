@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { AgentEvent, Investigation, MarketSignal, ToolCall, TopicCluster } from "@/types";
+import type { AgentEvent, Investigation, ToolCall } from "@/types";
 
 const signalSourceSchema = z.enum(["reddit", "x", "linkedin", "support", "other"]);
 const sentimentSchema = z.enum(["positive", "negative", "neutral"]);
@@ -37,11 +37,8 @@ export const agentInvestigationResultSchema = z.object({
   confidence: z.number().min(0).max(100),
   urgency: z.object({
     score: z.number().min(0).max(100),
-    level: z.enum(["low", "medium", "high"]),
   }),
   summary: z.string().min(1),
-  evidence: z.array(marketSignalSchema),
-  clusters: z.array(topicClusterSchema),
   recommendation: z.string().min(1),
   decisionRequired: z.boolean(),
 });
@@ -50,7 +47,7 @@ export const createInvestigationRequestSchema = z.object({
   objective: z.string().min(1).max(500).optional(),
 });
 
-const investigationSchema = agentInvestigationResultSchema.extend({
+const investigationSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   status: z.literal("investigation_complete"),
@@ -64,6 +61,23 @@ const investigationSchema = agentInvestigationResultSchema.extend({
     negativeSignalChangePct: z.number(),
     totalSignals: z.number().int().nonnegative(),
   }),
+  hypothesis: z.string().min(1),
+  languageQualifier: z.enum([
+    "probable_contributor",
+    "correlation",
+    "possible_cause",
+    "insufficient_evidence",
+  ]),
+  confidence: z.number().min(0).max(100),
+  urgency: z.object({
+    score: z.number().min(0).max(100),
+    level: z.enum(["low", "medium", "high"]),
+  }),
+  summary: z.string().min(1),
+  evidence: z.array(marketSignalSchema),
+  clusters: z.array(topicClusterSchema),
+  recommendation: z.string().min(1),
+  decisionRequired: z.boolean(),
 });
 
 const agentEventSchema = z.object({
@@ -113,19 +127,7 @@ export const createInvestigationResponseSchema = z.object({
   events: z.array(agentEventSchema),
 });
 
-export type AgentInvestigationResult = Pick<
-  Investigation,
-  | "hypothesis"
-  | "languageQualifier"
-  | "confidence"
-  | "urgency"
-  | "summary"
-  | "recommendation"
-  | "decisionRequired"
-> & {
-  evidence: MarketSignal[];
-  clusters: TopicCluster[];
-};
+export type AgentInvestigationResult = z.infer<typeof agentInvestigationResultSchema>;
 
 export type CreateInvestigationRequest = { objective?: string };
 

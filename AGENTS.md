@@ -1,4 +1,5 @@
 <!-- LOVABLE:BEGIN -->
+
 > [!IMPORTANT]
 > This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
 > published git history — force pushing, or rebasing/amending/squashing commits
@@ -7,11 +8,12 @@
 >
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
+
 <!-- LOVABLE:END -->
 
-# SignalRoom
+# VIU AI
 
-SignalRoom is an autonomous Market Intelligence AI Agent built for the Hack2L
+VIU AI is an autonomous Market Intelligence AI Agent built for the Hack2L
 AI Agents Hackathon. It monitors external customer/market signals and internal
 business metrics, investigates meaningful anomalies, produces an evidence-backed
 hypothesis, and brings the right humans into a decision workflow.
@@ -30,7 +32,8 @@ captured → follow-up executed or monitored → monitoring resumes.
 
 For the first real vertical slice, the frontend calls `POST /api/investigations`.
 Open Agent Loops runs a Featherless-backed agent that decides whether to call the
-fake `search_market_signals()` and `get_sales_metrics()` tools. Gorilla, Google
+fake `search_market_signals()` and `get_sales_metrics()` tools and must gather
+validated evidence from both categories before concluding. Gorilla, Google
 Calendar, and ElevenLabs remain unintegrated until explicitly requested.
 
 ## Current architecture
@@ -43,14 +46,14 @@ Calendar, and ElevenLabs remain unintegrated until explicitly requested.
 - Shared UI-facing domain contracts live in `src/types/index.ts` and
   `src/services/types.ts`.
 - Central demo fixtures live in `src/data/demo.ts`.
-- `src/server.ts` and `src/start.ts` provide server/SSR infrastructure; there is
-  currently no database, authentication, or domain API implementation.
+- `src/server.ts` and `src/start.ts` provide server/SSR infrastructure; the
+  investigation API is stateless, with no database or authentication.
 
 ## Important directories
 
 - `src/routes/` — pages and TanStack Start server routes.
 - `src/components/layout/` — application shell and Demo Mode controls.
-- `src/components/viu/` — SignalRoom presentation components.
+- `src/components/viu/` — VIU AI presentation components.
 - `src/components/ui/` — reusable UI primitives; avoid unnecessary edits.
 - `src/state/` — browser-side agent snapshot subscription.
 - `src/services/` — service contracts, registry, HTTP adapters, and mocks.
@@ -61,20 +64,19 @@ Calendar, and ElevenLabs remain unintegrated until explicitly requested.
 
 ## Commands
 
-Use Bun because `bun.lock` is the tracked lockfile. Do not create or update a
-second lockfile.
+Use npm on the hackathon machine. `package-lock.json` is the npm lockfile; legacy
+Lovable/Bun files may remain, but Bun must not be required for local development.
 
 ```sh
-bun install
-bun run dev
-bun run build
-bun run lint
-bun test
+npm install
+npm run dev
+npm run build
+npm run lint
+npm test
 ```
 
-The repository currently has no test files. Add focused deterministic tests with
-new backend behavior. The existing lint baseline contains formatting failures;
-do not mix broad formatting cleanup into feature changes.
+Focused backend tests use Vitest and deterministic model clients. Add test
+coverage with new backend behavior and keep provider-backed live checks manual.
 
 ## Architectural boundaries
 
