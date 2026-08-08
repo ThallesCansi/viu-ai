@@ -11,13 +11,7 @@ export const sourceLabels: Record<SignalSource, string> = {
   other: "Other",
 };
 
-export function EvidenceCard({
-  signal,
-  className,
-}: {
-  signal: MarketSignal;
-  className?: string;
-}) {
+export function EvidenceCard({ signal, className }: { signal: MarketSignal; className?: string }) {
   return (
     <article className={cn("panel flex flex-col gap-2.5 p-4", className)}>
       <div className="flex items-center justify-between gap-2">
@@ -39,7 +33,15 @@ export function EvidenceCard({
       <p className="text-[13px] leading-relaxed text-foreground">“{signal.text}”</p>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Chip tone={signal.sentiment === "negative" ? "danger" : signal.sentiment === "positive" ? "ok" : "muted"}>
+        <Chip
+          tone={
+            signal.sentiment === "negative"
+              ? "danger"
+              : signal.sentiment === "positive"
+                ? "ok"
+                : "muted"
+          }
+        >
           {signal.sentiment}
         </Chip>
         {signal.topic && <Chip tone="warn">{signal.topic}</Chip>}

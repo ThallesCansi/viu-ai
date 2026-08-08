@@ -15,6 +15,8 @@ import {
   mockMarketSignalsService,
 } from "@/services/mock/data-services";
 import { mockActionService, mockCalendarService } from "@/services/mock/support-services";
+import { config } from "@/services/config";
+import { createRemoteInvestigation } from "@/services/http/investigations";
 import type { AgentService, AgentSnapshot } from "@/services/types";
 import type {
   AgentEvent,
@@ -216,6 +218,13 @@ class MockAgentEngine implements AgentService {
     this.emit("anomaly_detected", "Market anomaly detected", {
       description: "Unusual increase in negative customer conversations.",
     });
+
+    if (!config.useMockAgent) {
+      await sleep(500);
+      await this.startInvestigation();
+      return;
+    }
+
     await sleep(900);
     this.emit("tool_call_started", "Cross-referencing internal business metrics", {
       tool: { name: "get_sales_metrics", provider: "Sales Data" },
@@ -247,6 +256,31 @@ class MockAgentEngine implements AgentService {
     this.emit("investigation_started", "Autonomous investigation started", {
       description: "Onboarding Friction",
     });
+
+    if (!config.useMockAgent) {
+      try {
+        const response = await createRemoteInvestigation();
+        this.patch({
+          status: response.investigation.status,
+          investigation: response.investigation,
+          steps: buildSteps(STEP_LABELS.length, -1),
+          toolCalls: response.toolCalls,
+          events: [...response.events, ...this.snapshot.events].slice(0, 200),
+          degraded: this.snapshot.degraded.filter((item) => item !== "Autonomous agent"),
+        });
+        this.busy = false;
+        return;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown agent error";
+        this.patch({
+          degraded: [...new Set([...this.snapshot.degraded, "Autonomous agent"])],
+        });
+        this.emit("finding_created", "Real agent unavailable — using demo fallback", {
+          description: message,
+        });
+        // Fall through to the deterministic mock investigation so the demo stays usable.
+      }
+    }
 
     await sleep(600);
     this.patch({ steps: buildSteps(1, 1) });
@@ -301,6 +335,9 @@ class MockAgentEngine implements AgentService {
 
   async completeInvestigation() {
     if (!this.snapshot.investigation || this.busy) return;
+    if (!config.useMockAgent && this.snapshot.investigation.status === "investigation_complete") {
+      return;
+    }
     this.busy = true;
     this.updateInvestigation({ clusters: topicClusters });
     this.patch({ steps: buildSteps(5, 5) });
@@ -486,7 +523,11 @@ class MockAgentEngine implements AgentService {
       await sleep(650);
       this.patch({
         followUps: this.snapshot.followUps.map((f, idx) =>
-          idx === i ? { ...f, status: "complete" } : idx === i + 1 ? { ...f, status: "running" } : f,
+          idx === i
+            ? { ...f, status: "complete" }
+            : idx === i + 1
+              ? { ...f, status: "running" }
+              : f,
         ),
       });
       this.emit("action_created", followUps[i]?.label ?? "Follow-up action created");

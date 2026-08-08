@@ -41,10 +41,13 @@ export function VoiceAgent({
     const session = await voiceService.startSession({ scenario: "onboarding-friction" });
     const lines = session.transcript.length ? session.transcript : demoTranscript;
     lines.forEach((line, i) => {
-      setTimeout(() => {
-        setTranscript((prev) => [...prev, line]);
-        onStageChange?.(Math.min(3, i) as 0 | 1 | 2 | 3);
-      }, i * 4200 + 900);
+      setTimeout(
+        () => {
+          setTranscript((prev) => [...prev, line]);
+          onStageChange?.(Math.min(3, i) as 0 | 1 | 2 | 3);
+        },
+        i * 4200 + 900,
+      );
     });
   }
 

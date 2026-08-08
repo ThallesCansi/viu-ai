@@ -7,11 +7,7 @@ import { StepTimeline, ToolActivity } from "@/components/viu/AgentProgress";
 import { ClusterBars } from "@/components/viu/ClusterBars";
 import { EvidenceCard } from "@/components/viu/EvidenceCard";
 import { EvidenceDrawer } from "@/components/viu/EvidenceDrawer";
-import {
-  HEADLINE_FINDING,
-  RECOMMENDATION_REASON,
-  meetingAgenda,
-} from "@/data/demo";
+import { HEADLINE_FINDING, RECOMMENDATION_REASON, meetingAgenda } from "@/data/demo";
 import { statusLabels } from "@/components/layout/TopBar";
 
 export const Route = createFileRoute("/investigations/$investigationId")({
@@ -35,15 +31,7 @@ export const Route = createFileRoute("/investigations/$investigationId")({
 
 function InvestigationDetail() {
   const navigate = useNavigate();
-  const {
-    investigation,
-    steps,
-    toolCalls,
-    people,
-    availability,
-    meeting,
-    status,
-  } = useAgent();
+  const { investigation, steps, toolCalls, people, availability, meeting, status } = useAgent();
 
   // Autonomy: once the agent flags a decision, it prepares people + scheduling itself.
   useEffect(() => {
@@ -64,7 +52,10 @@ function InvestigationDetail() {
     return (
       <div className="mx-auto max-w-[900px] px-8 py-20 text-center">
         <p className="text-[14px] font-medium">This investigation is no longer active.</p>
-        <Link to="/investigations" className="mt-3 inline-block text-[13px] text-agent hover:underline">
+        <Link
+          to="/investigations"
+          className="mt-3 inline-block text-[13px] text-agent hover:underline"
+        >
           Back to investigations
         </Link>
       </div>
@@ -219,15 +210,7 @@ function InvestigationDetail() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "danger" | "agent";
-}) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "danger" | "agent" }) {
   return (
     <div>
       <SectionLabel>{label}</SectionLabel>

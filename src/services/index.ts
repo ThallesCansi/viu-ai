@@ -11,11 +11,7 @@ import {
   mockCompanyDirectoryService,
   mockMarketSignalsService,
 } from "./mock/data-services";
-import {
-  mockActionService,
-  mockCalendarService,
-  mockVoiceService,
-} from "./mock/support-services";
+import { mockActionService, mockCalendarService, mockVoiceService } from "./mock/support-services";
 
 export const marketSignalsService = config.useMockMarketSignals
   ? mockMarketSignalsService

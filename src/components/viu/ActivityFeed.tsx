@@ -28,7 +28,11 @@ export function ActivityFeed({
   emptyLabel?: string;
 }) {
   if (!events.length) {
-    return <div className={cn("px-4 py-6 text-[13px] text-muted-foreground", className)}>{emptyLabel}</div>;
+    return (
+      <div className={cn("px-4 py-6 text-[13px] text-muted-foreground", className)}>
+        {emptyLabel}
+      </div>
+    );
   }
 
   return (

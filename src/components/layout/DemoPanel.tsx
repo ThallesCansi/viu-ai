@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { FlaskConical, Play } from "lucide-react";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { agentService } from "@/state/useAgent";
 
 type Action = { label: string; run: () => void | Promise<void>; primary?: boolean };

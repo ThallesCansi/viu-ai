@@ -23,12 +23,7 @@ export function StatusDot({
     <span className={cn("relative inline-flex h-2 w-2", className)}>
       <span className={cn("h-2 w-2 rounded-full", dotTone[tone])} />
       {pulse && (
-        <span
-          className={cn(
-            "absolute inset-0 rounded-full animate-pulse-ring",
-            dotTone[tone],
-          )}
-        />
+        <span className={cn("absolute inset-0 rounded-full animate-pulse-ring", dotTone[tone])} />
       )}
     </span>
   );

@@ -39,8 +39,15 @@ function SourceCard({ name, sub, tone }: { name: string; sub: string; tone: "ok"
 }
 
 function IntelligencePage() {
-  const { metrics, events, status, lastCycleAt, nextScanInSeconds, anomalyDetected, investigation } =
-    useAgent();
+  const {
+    metrics,
+    events,
+    status,
+    lastCycleAt,
+    nextScanInSeconds,
+    anomalyDetected,
+    investigation,
+  } = useAgent();
 
   const sources = integrations.filter((i) => i.group === "sources" || i.id === "gorilla");
   const internal = integrations.filter((i) => i.group === "internal");
@@ -79,9 +86,7 @@ function IntelligencePage() {
             </div>
             <div>
               <SectionLabel>Last cycle</SectionLabel>
-              <div className="mt-1 font-mono text-[13px] tabular-nums">
-                {lastCycleAt ?? "—"}
-              </div>
+              <div className="mt-1 font-mono text-[13px] tabular-nums">{lastCycleAt ?? "—"}</div>
             </div>
             <div>
               <SectionLabel>Next scan</SectionLabel>

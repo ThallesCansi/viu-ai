@@ -1,12 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  Activity,
-  BrainCircuit,
-  GitBranch,
-  Plug,
-  Radar,
-  ScrollText,
-} from "lucide-react";
+import { Activity, BrainCircuit, GitBranch, Plug, Radar, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusDot } from "@/components/viu/primitives";
 import { WORKSPACE } from "@/data/demo";

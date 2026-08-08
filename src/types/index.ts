@@ -69,10 +69,7 @@ export interface Investigation {
   };
   hypothesis: string;
   languageQualifier:
-    | "possible_cause"
-    | "probable_contributor"
-    | "correlation"
-    | "insufficient_evidence";
+    "possible_cause" | "probable_contributor" | "correlation" | "insufficient_evidence";
   confidence: number;
   urgency: {
     score: number;

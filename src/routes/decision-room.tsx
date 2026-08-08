@@ -266,9 +266,7 @@ function DecisionRoom() {
                         <span
                           className={
                             "flex h-3.5 w-3.5 items-center justify-center rounded-full border " +
-                            (f.status === "complete"
-                              ? "border-ok/40 bg-ok-soft"
-                              : "border-border")
+                            (f.status === "complete" ? "border-ok/40 bg-ok-soft" : "border-border")
                           }
                         >
                           {f.status === "complete" && <Check className="h-2 w-2 text-ok" />}

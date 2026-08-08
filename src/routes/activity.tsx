@@ -49,7 +49,9 @@ function ActivityPage() {
   const [active, setActive] = useState("all");
 
   const selected = filters.find((f) => f.id === active);
-  const filtered = selected?.types ? events.filter((e) => selected.types!.includes(e.type)) : events;
+  const filtered = selected?.types
+    ? events.filter((e) => selected.types!.includes(e.type))
+    : events;
 
   return (
     <div className="mx-auto max-w-[1100px] px-8 py-7">
