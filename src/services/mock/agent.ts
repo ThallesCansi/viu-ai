@@ -17,7 +17,12 @@ import {
 import { mockActionService, mockCalendarService } from "@/services/mock/support-services";
 import { config } from "@/services/config";
 import { createRemoteInvestigation } from "@/services/http/investigations";
-import { buildPresentationDeck, clampPresentationStage } from "@/services/presentation";
+import {
+  buildPresentationDeck,
+  clampPresentationStage,
+  resolvePresentationDeck,
+} from "@/services/presentation";
+import { guacoInvestigation } from "@/data/guaco";
 import type { AgentService, AgentSnapshot } from "@/services/types";
 import type {
   AgentEvent,
@@ -57,31 +62,15 @@ const buildSteps = (doneCount: number, activeIndex: number): InvestigationStep[]
     status: i < doneCount ? "done" : i === activeIndex ? "active" : "pending",
   }));
 
-const INVESTIGATION_ID = "inv-onboarding-friction";
+const INVESTIGATION_ID = guacoInvestigation.id;
 
 const buildInvestigation = (partial: Partial<Investigation> = {}): Investigation => ({
-  id: INVESTIGATION_ID,
-  title: "Onboarding Friction",
+  ...guacoInvestigation,
   status: "investigating",
-  detectedAt: "Today, 12:07 PM",
-  anomaly: {
-    title: "Emerging business risk",
-    summary:
-      "VIU AI detected an unusual change across internal and external signals: declining sales performance alongside a concentrated rise in negative customer conversations.",
-  },
-  metrics: {
-    salesChangePct: -11,
-    negativeSignalChangePct: 36,
-    totalSignals: 142,
-  },
-  hypothesis: HYPOTHESIS,
-  languageQualifier: "probable_contributor",
   confidence: 0,
   urgency: { score: 0, level: "medium" },
-  summary: INVESTIGATION_SUMMARY,
   clusters: [],
   evidence: [],
-  recommendation: RECOMMENDATION,
   decisionRequired: false,
   ...partial,
 });
@@ -164,7 +153,7 @@ class MockAgentEngine implements AgentService {
   private updateInvestigation(patch: Partial<Investigation>) {
     if (!this.snapshot.investigation) return;
     const investigation = { ...this.snapshot.investigation, ...patch };
-    const presentation = buildPresentationDeck(investigation);
+    const presentation = resolvePresentationDeck(investigation);
     this.patch({
       investigation,
       presentation,
@@ -227,7 +216,7 @@ class MockAgentEngine implements AgentService {
     if (this.snapshot.anomalyDetected) return;
     this.patch({ status: "anomaly_detected", anomalyDetected: true });
     this.emit("anomaly_detected", "Market anomaly detected", {
-      description: "Unusual increase in negative customer conversations.",
+      description: guacoInvestigation.anomaly.summary,
     });
 
     if (!config.useMockAgent) {
@@ -242,7 +231,7 @@ class MockAgentEngine implements AgentService {
     });
     await mockBusinessMetricsService.getMetrics();
     await sleep(800);
-    this.emit("tool_call_completed", "Sales decline confirmed: -11%", {
+    this.emit("tool_call_completed", "Métricas regionais simuladas recuperadas", {
       tool: { name: "get_sales_metrics", provider: "Sales Data" },
     });
     await sleep(700);
@@ -257,7 +246,7 @@ class MockAgentEngine implements AgentService {
     this.patch({
       status: "investigating",
       investigation,
-      presentation: buildPresentationDeck(investigation),
+      presentation: resolvePresentationDeck(investigation),
       steps: buildSteps(0, 0),
       metrics: this.snapshot.metrics.map((m) =>
         m.id === "investigations"
@@ -266,7 +255,7 @@ class MockAgentEngine implements AgentService {
       ),
     });
     this.emit("investigation_started", "Autonomous investigation started", {
-      description: "Onboarding Friction",
+      description: guacoInvestigation.title,
     });
 
     if (!config.useMockAgent) {
@@ -275,7 +264,7 @@ class MockAgentEngine implements AgentService {
         this.patch({
           status: response.investigation.status,
           investigation: response.investigation,
-          presentation: buildPresentationDeck(response.investigation),
+          presentation: resolvePresentationDeck(response.investigation),
           steps: buildSteps(STEP_LABELS.length, -1),
           toolCalls: response.toolCalls,
           events: [...response.events, ...this.snapshot.events].slice(0, 200),
@@ -310,7 +299,7 @@ class MockAgentEngine implements AgentService {
       provider: "Sales Data",
       name: "get_sales_metrics",
       status: "complete",
-      result: "Sales -11%",
+      result: "Campinas +11.3% · Grande ABC -11.4% vs meta",
     });
     this.patch({ steps: buildSteps(2, 2) });
 
@@ -318,7 +307,7 @@ class MockAgentEngine implements AgentService {
       id: "t-gorilla-1",
       provider: "Gorilla",
       name: "search_market_signals",
-      query: '"acme saas" customer conversations, last 14 days',
+      query: '"gua.co" OR "guaco" restaurante — menções públicas',
       status: "running",
     });
     this.emit("tool_call_started", "Searching market conversations", {
@@ -330,18 +319,18 @@ class MockAgentEngine implements AgentService {
       id: "t-gorilla-1",
       provider: "Gorilla",
       name: "search_market_signals",
-      query: '"acme saas" customer conversations, last 14 days',
+      query: '"gua.co" OR "guaco" restaurante — menções públicas',
       status: "complete",
-      result: "142 relevant conversations",
+      result: "50 registros brutos · 11 relevantes",
     });
-    this.emit("tool_call_completed", "142 relevant conversations retrieved", {
+    this.emit("tool_call_completed", "11 conversas relevantes retidas após filtragem", {
       tool: { name: "search_market_signals", provider: "Gorilla" },
     });
     this.patch({ steps: buildSteps(3, 3) });
 
     await sleep(900);
-    this.updateInvestigation({ clusters: topicClusters });
-    this.emit("finding_created", "Negative conversations clustered into 4 topics");
+    this.updateInvestigation({ clusters: guacoInvestigation.clusters });
+    this.emit("finding_created", "Sinais agrupados em 4 clusters temáticos");
     this.patch({ steps: buildSteps(4, 4) });
     this.busy = false;
   }
@@ -352,14 +341,14 @@ class MockAgentEngine implements AgentService {
       return;
     }
     this.busy = true;
-    this.updateInvestigation({ clusters: topicClusters });
+    this.updateInvestigation({ clusters: guacoInvestigation.clusters });
     this.patch({ steps: buildSteps(5, 5) });
 
     this.upsertTool({
       id: "t-gorilla-2",
       provider: "Gorilla",
       name: "search_market_signals",
-      query: '"onboarding verification friction"',
+      query: '"gua.co campinas" OR "gua.co abc"',
       status: "running",
     });
     this.emit("tool_call_started", "Requesting additional evidence", {
@@ -370,29 +359,35 @@ class MockAgentEngine implements AgentService {
       id: "t-gorilla-2",
       provider: "Gorilla",
       name: "search_market_signals",
-      query: '"onboarding verification friction"',
+      query: '"gua.co campinas" OR "gua.co abc"',
       status: "complete",
-      result: "27 strongly related conversations",
+      result: "6 evidências-chave selecionadas",
     });
-    this.emit("finding_created", "27 onboarding-related signals found");
-    this.updateInvestigation({ evidence: evidenceSignals });
+    this.emit("finding_created", "11 evidências explicitamente ligadas à marca retidas");
+    this.updateInvestigation({ evidence: guacoInvestigation.evidence });
     this.patch({ steps: buildSteps(6, 6) });
 
     await sleep(900);
-    this.emit("finding_created", "Timing overlap confirmed with sales decline");
+    this.emit(
+      "finding_created",
+      "Associação entre sinal social recente e desempenho regional simulado",
+    );
     this.patch({ steps: buildSteps(7, 7) });
 
     await sleep(800);
-    this.updateInvestigation({ confidence: 84, urgency: { score: 82, level: "high" } });
-    this.emit("confidence_updated", "Confidence updated to 84%");
+    this.updateInvestigation({
+      confidence: guacoInvestigation.confidence,
+      urgency: guacoInvestigation.urgency,
+    });
+    this.emit("confidence_updated", `Confidence updated to ${guacoInvestigation.confidence}%`);
     await sleep(600);
     this.patch({ steps: buildSteps(9, -1), status: "investigation_complete" });
     this.updateInvestigation({
       status: "investigation_complete",
-      summary: INVESTIGATION_SUMMARY,
+      summary: guacoInvestigation.summary,
       decisionRequired: true,
     });
-    this.emit("finding_created", HEADLINE_FINDING);
+    this.emit("finding_created", guacoInvestigation.hypothesis);
     await sleep(700);
     this.patch({ status: "decision_required" });
     this.updateInvestigation({ status: "decision_required" });
@@ -468,7 +463,7 @@ class MockAgentEngine implements AgentService {
 
     const creating = await mockCalendarService.createMeeting({
       investigationId: INVESTIGATION_ID,
-      title: "Decision Review — Onboarding Friction",
+      title: `Decision Review — ${guacoInvestigation.title}`,
       attendees,
       slot,
       agenda: meetingAgenda,
@@ -482,7 +477,7 @@ class MockAgentEngine implements AgentService {
     await sleep(1100);
     this.patch({ meeting: creating, status: "meeting_ready" });
     this.emit("meeting_created", "Decision meeting created", {
-      description: "Decision Review — Onboarding Friction · Today 3:30 PM",
+      description: `Decision Review — ${guacoInvestigation.title} · Today 3:30 PM`,
     });
     this.busy = false;
   }

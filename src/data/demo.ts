@@ -14,7 +14,7 @@ import type {
  */
 
 export const WORKSPACE = {
-  company: "Acme SaaS",
+  company: "GUA.CO",
   agentName: "Market Intelligence Agent",
 } as const;
 

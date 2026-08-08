@@ -1,4 +1,5 @@
 import { WORKSPACE } from "@/data/demo";
+import { guacoPresentation, guacoVoiceContext, isGuacoInvestigation } from "@/data/guaco";
 import type {
   CompanyPerson,
   DecisionMeeting,
@@ -111,6 +112,15 @@ export function buildPresentationDeck(investigation: Investigation): Presentatio
   };
 }
 
+/**
+ * Returns the fixed GUA.CO demo deck when the fixed investigation is active,
+ * otherwise falls back to the derived deck.
+ */
+export function resolvePresentationDeck(investigation: Investigation): PresentationDeck {
+  if (isGuacoInvestigation(investigation)) return guacoPresentation;
+  return buildPresentationDeck(investigation);
+}
+
 export function buildSlideStructure(presentation: PresentationDeck): string {
   return presentation.slides
     .map((slide, index) => `${index + 1} - ${slide.title}: ${slide.headline}`)
@@ -190,6 +200,7 @@ export function buildVoiceMeetingContext(input: {
   company?: string;
 }): VoiceMeetingContext {
   const { investigation, presentation, attendees, meeting } = input;
+  if (isGuacoInvestigation(investigation)) return guacoVoiceContext;
   return {
     empresa: input.company ?? WORKSPACE.company,
     objetivo_reuniao: `Review ${investigation.title} and decide whether intervention is required.`,
