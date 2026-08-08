@@ -14,10 +14,10 @@ import { useAgent } from "@/state/useAgent";
 
 const nav = [
   { to: "/", label: "Intelligence", icon: Radar, exact: true },
-  { to: "/investigations", label: "Investigations", icon: GitBranch },
-  { to: "/decisions", label: "Decisions", icon: ScrollText },
-  { to: "/activity", label: "Agent Activity", icon: Activity },
-  { to: "/integrations", label: "Integrations", icon: Plug },
+  { to: "/investigations", label: "Investigations", icon: GitBranch, exact: false },
+  { to: "/decisions", label: "Decisions", icon: ScrollText, exact: false },
+  { to: "/activity", label: "Agent Activity", icon: Activity, exact: false },
+  { to: "/integrations", label: "Integrations", icon: Plug, exact: false },
 ] as const;
 
 export function AppSidebar() {
