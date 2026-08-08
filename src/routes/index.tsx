@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Market Intelligence — VIU AI" },
       {
         property: "og:description",
-        content: "Autonomous market intelligence agent for Acme SaaS.",
+        content: "VIU AI continuously monitors customer, market and business signals and investigates meaningful changes automatically.",
       },
     ],
   }),
