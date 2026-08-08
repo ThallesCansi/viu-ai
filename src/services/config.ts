@@ -23,6 +23,9 @@ export const config = {
   useMockAgent: flag("VITE_USE_MOCK_AGENT"),
   useMockCalendar: flag("VITE_USE_MOCK_CALENDAR"),
   useMockVoice: flag("VITE_USE_MOCK_VOICE"),
+  elevenLabsAgentId:
+    (import.meta.env as Record<string, string | undefined>)["VITE_ELEVENLABS_AGENT_ID"] ??
+    "agent_2301kzh07enpe3zt2ph7mbznsxf7",
 } as const;
 
 /**
@@ -38,7 +41,7 @@ export const API_ROUTES = {
   investigationEvents: "GET /api/investigations/:id/events",
   availability: "POST /api/calendar/availability",
   meetings: "POST /api/calendar/meetings",
-  voiceSession: "POST /api/voice/session",
+  voiceSession: "GET /api/voice/session",
   decisions: "POST /api/decisions",
   actions: "POST /api/actions",
 } as const;

@@ -9,10 +9,11 @@ import type {
   Investigation,
   InvestigationStep,
   MarketSignal,
+  PresentationDeck,
   PresentationStage,
   ToolCall,
-  TranscriptLine,
-  VoiceState,
+  VoiceMeetingContext,
+  VoiceSessionSnapshot,
 } from "@/types";
 
 export interface AgentSnapshot {
@@ -32,6 +33,7 @@ export interface AgentSnapshot {
   meeting: DecisionMeeting | null;
   decision: DecisionRecord | null;
   followUps: FollowUpAction[];
+  presentation: PresentationDeck | null;
   presentationStage: PresentationStage;
   degraded: string[];
 }
@@ -61,10 +63,14 @@ export interface CalendarService {
 }
 
 export interface VoiceService {
-  startSession(context?: unknown): Promise<{ sessionId: string; transcript: TranscriptLine[] }>;
+  startSession(input: {
+    context: VoiceMeetingContext;
+    getPresentation: () => PresentationDeck;
+    onStageChange: (stage: number) => void;
+  }): Promise<{ sessionId: string }>;
   stopSession(): Promise<void>;
-  sendContext(context: unknown): Promise<void>;
-  subscribe(listener: (state: VoiceState) => void): () => void;
+  sendContext(context: string): Promise<void>;
+  subscribe(listener: (snapshot: VoiceSessionSnapshot) => void): () => void;
 }
 
 export interface ActionService {

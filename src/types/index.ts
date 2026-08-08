@@ -197,6 +197,55 @@ export interface TranscriptLine {
   text: string;
 }
 
-export type VoiceState = "idle" | "ready" | "speaking" | "listening" | "thinking" | "unavailable";
+export type VoiceState =
+  | "idle"
+  | "ready"
+  | "connecting"
+  | "speaking"
+  | "listening"
+  | "thinking"
+  | "disconnected"
+  | "error"
+  | "unavailable";
 
-export type PresentationStage = 0 | 1 | 2 | 3;
+export interface VoiceSessionSnapshot {
+  state: VoiceState;
+  active: boolean;
+  transcript: TranscriptLine[];
+  error: string | null;
+}
+
+export interface PresentationMetric {
+  label: string;
+  value: string;
+  tone?: "neutral" | "danger" | "agent" | "ok" | "warn";
+}
+
+export interface PresentationSlide {
+  id: string;
+  title: string;
+  headline: string;
+  body?: string;
+  bullets?: string[];
+  metrics?: PresentationMetric[];
+  evidenceIds?: string[];
+  speakerNotes?: string;
+}
+
+export interface PresentationDeck {
+  id: string;
+  title: string;
+  summary: string;
+  slides: PresentationSlide[];
+}
+
+export interface VoiceMeetingContext {
+  empresa: string;
+  objetivo_reuniao: string;
+  numero_slides: number;
+  estrutura_slides: string;
+  resumo_executivo: string;
+  contexto_detalhado: string;
+}
+
+export type PresentationStage = number;

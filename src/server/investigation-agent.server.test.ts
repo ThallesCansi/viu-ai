@@ -61,8 +61,12 @@ describe("runInvestigation", () => {
       "get_sales_metrics",
       "search_market_signals",
     ]);
+    expect(model.requests[0]?.system).toContain("request both tools in the same assistant turn");
     expect(JSON.stringify(model.requests[1]?.messages)).toContain(
       "external market/customer signals and internal business performance",
+    );
+    expect(JSON.stringify(model.requests[1]?.messages)).toContain(
+      "request both in the same turn when appropriate",
     );
     expect(JSON.stringify(model.requests[3]?.messages)).toContain("internal business performance");
     expect(response.investigation).toMatchObject({

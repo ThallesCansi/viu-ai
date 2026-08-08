@@ -17,6 +17,7 @@ import {
 import { mockActionService, mockCalendarService } from "@/services/mock/support-services";
 import { config } from "@/services/config";
 import { createRemoteInvestigation } from "@/services/http/investigations";
+import { buildPresentationDeck, clampPresentationStage } from "@/services/presentation";
 import type { AgentService, AgentSnapshot } from "@/services/types";
 import type {
   AgentEvent,
@@ -102,6 +103,7 @@ const initialSnapshot = (): AgentSnapshot => ({
   meeting: null,
   decision: null,
   followUps: [],
+  presentation: null,
   presentationStage: 0,
   degraded: [],
 });
@@ -161,7 +163,16 @@ class MockAgentEngine implements AgentService {
 
   private updateInvestigation(patch: Partial<Investigation>) {
     if (!this.snapshot.investigation) return;
-    this.patch({ investigation: { ...this.snapshot.investigation, ...patch } });
+    const investigation = { ...this.snapshot.investigation, ...patch };
+    const presentation = buildPresentationDeck(investigation);
+    this.patch({
+      investigation,
+      presentation,
+      presentationStage: clampPresentationStage(
+        this.snapshot.presentationStage,
+        presentation.slides.length,
+      ),
+    });
   }
 
   // ---------------------------------------------------------------- monitoring
@@ -246,6 +257,7 @@ class MockAgentEngine implements AgentService {
     this.patch({
       status: "investigating",
       investigation,
+      presentation: buildPresentationDeck(investigation),
       steps: buildSteps(0, 0),
       metrics: this.snapshot.metrics.map((m) =>
         m.id === "investigations"
@@ -263,6 +275,7 @@ class MockAgentEngine implements AgentService {
         this.patch({
           status: response.investigation.status,
           investigation: response.investigation,
+          presentation: buildPresentationDeck(response.investigation),
           steps: buildSteps(STEP_LABELS.length, -1),
           toolCalls: response.toolCalls,
           events: [...response.events, ...this.snapshot.events].slice(0, 200),
@@ -483,7 +496,12 @@ class MockAgentEngine implements AgentService {
   }
 
   setPresentationStage(stage: PresentationStage) {
-    this.patch({ presentationStage: stage });
+    this.patch({
+      presentationStage: clampPresentationStage(
+        stage,
+        this.snapshot.presentation?.slides.length ?? 0,
+      ),
+    });
   }
 
   async approveDecision(outcome: "approved" | "modified" | "rejected" = "approved") {

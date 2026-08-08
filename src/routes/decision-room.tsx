@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { agentService, useAgent } from "@/state/useAgent";
 import { Chip, SectionLabel, StatusDot } from "@/components/viu/primitives";
 import { VoiceAgent } from "@/components/viu/VoiceAgent";
-import { ClusterBars } from "@/components/viu/ClusterBars";
-import { EvidenceCard } from "@/components/viu/EvidenceCard";
 import { EvidenceDrawer } from "@/components/viu/EvidenceDrawer";
-import { HEADLINE_FINDING, PROPOSED_ACTION, RECOMMENDATION } from "@/data/demo";
+import { PresentationSlideView } from "@/components/viu/PresentationSlideView";
+import { clampPresentationStage, getSlideNavigation } from "@/services/presentation";
 import type { PresentationStage } from "@/types";
 
 export const Route = createFileRoute("/decision-room")({
@@ -29,21 +28,29 @@ export const Route = createFileRoute("/decision-room")({
   component: DecisionRoom,
 });
 
-const stages = [
-  "What changed?",
-  "What customers are saying",
-  "What we found",
-  "Recommendation",
-] as const;
-
 function DecisionRoom() {
-  const { investigation, presentationStage, decision, followUps, status } = useAgent();
+  const {
+    investigation,
+    presentation,
+    presentationStage,
+    decision,
+    followUps,
+    status,
+    people,
+    meeting,
+  } = useAgent();
   const [outcome, setOutcome] = useState<string | null>(null);
 
-  if (!investigation) {
+  useEffect(() => {
+    if (!presentation) return;
+    const clamped = clampPresentationStage(presentationStage, presentation.slides.length);
+    if (clamped !== presentationStage) agentService.setPresentationStage(clamped);
+  }, [presentation, presentationStage]);
+
+  if (!investigation || !presentation || presentation.slides.length === 0) {
     return (
       <div className="mx-auto max-w-[900px] px-8 py-20 text-center">
-        <p className="text-[14px] font-medium">No decision meeting is active.</p>
+        <p className="text-[14px] font-medium">No decision presentation is active.</p>
         <Link to="/" className="mt-3 inline-block text-[13px] text-agent hover:underline">
           Back to intelligence
         </Link>
@@ -51,8 +58,10 @@ function DecisionRoom() {
     );
   }
 
-  const stage = presentationStage;
+  const stage = clampPresentationStage(presentationStage, presentation.slides.length);
   const setStage = (s: PresentationStage) => agentService.setPresentationStage(s);
+  const navigation = getSlideNavigation(presentation);
+  const currentSlide = presentation.slides[stage];
 
   return (
     <div className="relative min-h-full">
@@ -70,42 +79,54 @@ function DecisionRoom() {
         </header>
 
         <div className="mb-6 grid grid-cols-4 gap-4">
-          <HeroStat label="Sales" value="↓ 11%" tone="danger" />
-          <HeroStat label="Negative signals" value="↑ 36%" tone="danger" />
-          <HeroStat label="Confidence" value={`${investigation.confidence || 84}%`} tone="agent" />
-          <HeroStat label="Urgency" value="HIGH" tone="danger" />
+          <HeroStat
+            label="Sales"
+            value={`${investigation.metrics.salesChangePct > 0 ? "+" : ""}${investigation.metrics.salesChangePct}%`}
+            tone={investigation.metrics.salesChangePct < 0 ? "danger" : "agent"}
+          />
+          <HeroStat
+            label="Negative signals"
+            value={`${investigation.metrics.negativeSignalChangePct > 0 ? "+" : ""}${investigation.metrics.negativeSignalChangePct}%`}
+            tone={investigation.metrics.negativeSignalChangePct > 0 ? "danger" : "agent"}
+          />
+          <HeroStat label="Confidence" value={`${investigation.confidence}%`} tone="agent" />
+          <HeroStat
+            label="Urgency"
+            value={investigation.urgency.level.toUpperCase()}
+            tone={investigation.urgency.level === "high" ? "danger" : "agent"}
+          />
         </div>
 
         <div className="grid grid-cols-[1fr_420px] items-start gap-5">
           <section className="panel min-h-[460px] overflow-hidden">
             <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
               <div className="flex gap-1">
-                {stages.map((s, i) => (
+                {navigation.map((item) => (
                   <button
-                    key={s}
+                    key={item.id}
                     type="button"
-                    onClick={() => setStage(i as PresentationStage)}
+                    onClick={() => setStage(item.index)}
                     className={
                       "rounded-md px-2.5 py-1.5 text-[12px] font-medium transition-colors " +
-                      (i === stage
+                      (item.index === stage
                         ? "bg-agent-soft text-agent"
                         : "text-muted-foreground hover:bg-accent hover:text-foreground")
                     }
                   >
-                    {i + 1}. {s}
+                    {item.label}
                   </button>
                 ))}
               </div>
-              <div className="flex gap-1">
-                <NavButton
-                  disabled={stage === 0}
-                  onClick={() => setStage(Math.max(0, stage - 1) as PresentationStage)}
-                >
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] tabular-nums text-muted-foreground">
+                  {stage + 1} / {presentation.slides.length}
+                </span>
+                <NavButton disabled={stage === 0} onClick={() => setStage(stage - 1)}>
                   <ChevronLeft className="h-4 w-4" />
                 </NavButton>
                 <NavButton
-                  disabled={stage === 3}
-                  onClick={() => setStage(Math.min(3, stage + 1) as PresentationStage)}
+                  disabled={stage === presentation.slides.length - 1}
+                  onClick={() => setStage(stage + 1)}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </NavButton>
@@ -113,60 +134,8 @@ function DecisionRoom() {
             </div>
 
             <div key={stage} className="animate-rise p-7">
-              {stage === 0 && (
-                <StageBlock
-                  eyebrow="What changed?"
-                  statement="Sales declined 11% while negative customer sentiment increased 36%."
-                >
-                  <div className="mt-6 grid grid-cols-3 gap-4">
-                    <Tile label="Previous sales" value="$100K" />
-                    <Tile label="Current sales" value="$89K" tone="danger" />
-                    <Tile label="Conversations evaluated" value="142" />
-                  </div>
-                </StageBlock>
-              )}
-
-              {stage === 1 && (
-                <StageBlock
-                  eyebrow="What customers are saying"
-                  statement="Negative conversations are concentrating into one dominant topic."
-                >
-                  <div className="mt-6 grid grid-cols-2 gap-6">
-                    <ClusterBars clusters={investigation.clusters} />
-                    <div className="flex flex-col gap-3">
-                      {investigation.evidence.slice(0, 2).map((s) => (
-                        <EvidenceCard key={s.id} signal={s} />
-                      ))}
-                    </div>
-                  </div>
-                </StageBlock>
-              )}
-
-              {stage === 2 && (
-                <StageBlock
-                  eyebrow="What we found"
-                  statement="27 relevant conversations are concentrated around onboarding friction, particularly the new verification step."
-                >
-                  <p className="mt-5 max-w-3xl text-[14px] leading-relaxed text-muted-foreground">
-                    {HEADLINE_FINDING} Correlation detected — causality has not been established.
-                  </p>
-                  <div className="mt-6 flex gap-10">
-                    <Tile label="Confidence" value="84%" tone="agent" />
-                    <Tile label="Urgency" value="82 / 100" tone="danger" />
-                    <Tile label="Qualifier" value="Probable contributor" />
-                  </div>
-                </StageBlock>
-              )}
-
-              {stage === 3 && (
-                <StageBlock
-                  eyebrow="Recommendation"
-                  statement="Evaluate a simplified onboarding flow through a controlled experiment or rollback."
-                >
-                  <p className="mt-5 max-w-3xl text-[14px] leading-relaxed text-muted-foreground">
-                    {RECOMMENDATION}
-                  </p>
-                </StageBlock>
+              {currentSlide && (
+                <PresentationSlideView slide={currentSlide} evidence={investigation.evidence} />
               )}
             </div>
 
@@ -183,7 +152,14 @@ function DecisionRoom() {
           </section>
 
           <div className="flex flex-col gap-5">
-            <VoiceAgent className="h-[420px]" onStageChange={(s) => setStage(s)} />
+            <VoiceAgent
+              className="h-[420px]"
+              investigation={investigation}
+              presentation={presentation}
+              attendees={people}
+              meeting={meeting}
+              onStageChange={setStage}
+            />
           </div>
         </div>
 
@@ -195,7 +171,9 @@ function DecisionRoom() {
 
           <div className="grid grid-cols-[1fr_320px] gap-6 p-5">
             <div>
-              <p className="max-w-3xl text-[15px] font-medium leading-snug">{PROPOSED_ACTION}</p>
+              <p className="max-w-3xl text-[15px] font-medium leading-snug">
+                {investigation.recommendation}
+              </p>
               <div className="mt-5 flex flex-wrap gap-10">
                 <Tile label="Owner" value="Pedro Lima" />
                 <Tile label="Primary metric" value="Onboarding completion rate" />
@@ -315,26 +293,6 @@ function NavButton({
     >
       {children}
     </button>
-  );
-}
-
-function StageBlock({
-  eyebrow,
-  statement,
-  children,
-}: {
-  eyebrow: string;
-  statement: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div>
-      <SectionLabel className="text-agent">{eyebrow}</SectionLabel>
-      <h2 className="mt-2 max-w-4xl text-[24px] leading-tight font-semibold tracking-tight">
-        {statement}
-      </h2>
-      {children}
-    </div>
   );
 }
 

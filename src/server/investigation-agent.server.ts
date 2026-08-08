@@ -28,7 +28,7 @@ export const DEFAULT_INVESTIGATION_OBJECTIVE =
 
 const SYSTEM_PROMPT = `You are VIU AI, an autonomous market-intelligence agent.
 
-Decide which available tools to call, when to call them, and what arguments to use. Do not follow a predetermined tool sequence. A business investigation cannot be completed until evidence from both external market/customer signals and internal business performance has been gathered.
+Decide which available tools to call, when to call them, and what arguments to use. Do not follow a predetermined tool sequence. A business investigation cannot be completed until evidence from both external market/customer signals and internal business performance has been gathered. The two evidence categories are independent, so when both are missing and both tools are appropriate, request both tools in the same assistant turn so they can run together.
 
 Ground the hypothesis, summary, confidence, urgency score, and recommendation only in returned tool observations. When topic clusters are available, identify the strongest supported finding from their counts and relevance; never substitute a generic issue that does not appear in the evidence.
 
@@ -37,7 +37,8 @@ Do not claim causation unless the evidence establishes it. Prefer correlation, p
 Your final assistant message must contain only one JSON object that conforms to this JSON Schema. Do not wrap it in Markdown. The server derives evidence, topic clusters, business metrics, and urgency level from validated tool observations; do not invent or include them in your final object:
 ${JSON.stringify(z.toJSONSchema(agentInvestigationResultSchema))}`;
 
-const AGENT_TIMEOUT_MS = 60_000;
+const DEFAULT_AGENT_TIMEOUT_MS = 90_000;
+const DEFAULT_MODEL_REQUEST_TIMEOUT_MS = 40_000;
 const AGENT_MAX_STEPS = 8;
 
 export class AgentConfigurationError extends Error {}
@@ -64,20 +65,23 @@ type EventCollector = {
 export async function runInvestigation(
   options: RunInvestigationOptions = {},
 ): Promise<CreateInvestigationResponse> {
+  const investigationStartedAt = Date.now();
+  let investigationOutcome = "failed";
   const now = options.now ?? (() => new Date());
   const idFactory = options.idFactory ?? (() => crypto.randomUUID());
   const sessionId = `investigation-${idFactory()}`;
   const collector = createEventCollector(sessionId);
-  const model = options.model ?? createFeatherlessModel();
   const controller = new AbortController();
+  const agentTimeoutMs = positiveIntegerEnv("AGENT_TIMEOUT_MS", DEFAULT_AGENT_TIMEOUT_MS);
   const timeout = setTimeout(
     () => controller.abort(new Error("Agent investigation timed out.")),
-    AGENT_TIMEOUT_MS,
+    agentTimeoutMs,
   );
   const forwardAbort = () => controller.abort(options.signal?.reason);
   options.signal?.addEventListener("abort", forwardAbort, { once: true });
 
   try {
+    const model = options.model ?? createFeatherlessModel();
     const run = await runAgent({
       model,
       memory: new SessionMemoryStore(),
@@ -121,14 +125,20 @@ export async function runInvestigation(
       );
     }
 
-    return {
+    const response = {
       investigation,
       toolCalls: collector.toolCalls,
       events: [...collector.events].reverse(),
     };
+    investigationOutcome = "completed";
+    return response;
   } finally {
     clearTimeout(timeout);
     options.signal?.removeEventListener("abort", forwardAbort);
+    logDevelopmentTiming("investigation_finished", {
+      durationMs: Date.now() - investigationStartedAt,
+      outcome: investigationOutcome,
+    });
   }
 }
 
@@ -143,8 +153,8 @@ function createFeatherlessModel(): ModelClient {
     baseURL: process.env["FEATHERLESS_BASE_URL"] ?? "https://api.featherless.ai/v1",
     model: process.env["FEATHERLESS_MODEL"] ?? "Qwen/Qwen3-32B",
     thinking: "auto",
-    timeout: 45_000,
-    maxRetries: 1,
+    timeout: positiveIntegerEnv("FEATHERLESS_REQUEST_TIMEOUT_MS", DEFAULT_MODEL_REQUEST_TIMEOUT_MS),
+    maxRetries: 0,
     params: { temperature: 0.1 },
   });
 }
@@ -157,6 +167,8 @@ function createEventCollector(sessionId: string): EventCollector {
     marketSignals: [] as MarketSignalsObservation[],
     salesMetrics: [] as SalesMetricsObservation[],
   };
+  const toolStartedAt = new Map<string, number>();
+  let modelTurn: { step: number; startedAt: number } | undefined;
   let eventSequence = 0;
 
   return {
@@ -176,18 +188,41 @@ function createEventCollector(sessionId: string): EventCollector {
         return;
       }
 
+      if (event.type === LoopEventType.TurnStart) {
+        modelTurn = { step: event.step, startedAt: event.timestamp };
+        logDevelopmentTiming("model_turn_started", { step: event.step });
+        return;
+      }
+
+      if (event.type === LoopEventType.Message && isAssistantMessage(event.message)) {
+        if (modelTurn) {
+          logDevelopmentTiming("model_turn_completed", {
+            step: modelTurn.step,
+            durationMs: event.timestamp - modelTurn.startedAt,
+          });
+          modelTurn = undefined;
+        }
+        return;
+      }
+
       if (event.type === LoopEventType.ToolStart) {
+        const provider = providerFor(event.toolName);
+        toolStartedAt.set(event.toolCallId, event.timestamp);
+        logDevelopmentTiming("tool_started", { tool: event.toolName });
         toolCalls.push({
           id: event.toolCallId,
-          provider: providerFor(event.toolName),
+          provider,
           name: event.toolName,
           query: JSON.stringify(event.args),
           status: "running",
         });
         events.push(
           createUiEvent(sessionId, ++eventSequence, "tool_call_started", {
-            title: `Agent called ${event.toolName}`,
-            tool: { name: event.toolName, provider: providerFor(event.toolName) },
+            title:
+              event.toolName === "search_market_signals" && provider === "Gorilla"
+                ? "Gorilla search started"
+                : `Agent called ${event.toolName}`,
+            tool: { name: event.toolName, provider },
             metadata: { arguments: event.args },
             timestamp: event.timestamp,
           }),
@@ -196,16 +231,25 @@ function createEventCollector(sessionId: string): EventCollector {
       }
 
       if (event.type === LoopEventType.ToolEnd) {
+        const startedAt = toolStartedAt.get(event.toolCallId);
+        logDevelopmentTiming("tool_completed", {
+          tool: event.toolName,
+          durationMs: startedAt === undefined ? undefined : event.timestamp - startedAt,
+          outcome: event.isError ? "failed" : "completed",
+        });
+        toolStartedAt.delete(event.toolCallId);
         const observation = event.isError
           ? undefined
           : validateAndStoreObservation(event.toolName, event.result, observations);
         if (observation) {
           calledTools.add(event.toolName);
         }
+        const provider = providerFor(event.toolName, observation);
         const summary = summarizeToolResult(event.toolName, event.result, observation);
         const tool = toolCalls.find((call) => call.id === event.toolCallId);
         if (tool) {
           Object.assign(tool, {
+            provider,
             status: event.isError ? "failed" : "complete",
             result: summary,
           } satisfies Partial<ToolCall>);
@@ -214,11 +258,20 @@ function createEventCollector(sessionId: string): EventCollector {
           createUiEvent(sessionId, ++eventSequence, "tool_call_completed", {
             title: event.isError ? `${event.toolName} failed` : `${event.toolName} completed`,
             description: summary,
-            tool: { name: event.toolName, provider: providerFor(event.toolName) },
+            tool: { name: event.toolName, provider },
             metadata: { result: event.result, isError: event.isError },
             timestamp: event.timestamp,
           }),
         );
+        if (event.toolName === "search_market_signals" && observation) {
+          appendMarketProviderEvents(
+            events,
+            marketSignalsObservationSchema.parse(observation),
+            sessionId,
+            () => ++eventSequence,
+            event.timestamp,
+          );
+        }
       }
 
       // ReasoningDelta, TextDelta, and complete model messages are intentionally
@@ -323,21 +376,142 @@ function createUiEvent(
   };
 }
 
-function providerFor(toolName: string) {
-  return toolName === "search_market_signals" ? "Demo Market Data" : "Demo Sales Data";
+function providerFor(toolName: string, observation?: unknown) {
+  if (toolName !== "search_market_signals") return "Demo Sales Data";
+  if (observation) {
+    const metadata = marketSignalsObservationSchema.parse(observation).providerMetadata;
+    if (metadata.fallbackUsed) return "Gorilla → Demo fallback";
+    return metadata.provider === "gorilla" ? "Gorilla" : "Demo Market Data";
+  }
+  return process.env["VITE_USE_MOCK_MARKET_SIGNALS"] === "false" ? "Gorilla" : "Demo Market Data";
 }
 
 function summarizeToolResult(toolName: string, result: string, observation?: unknown) {
   if (toolName === "search_market_signals" && observation) {
     const marketSignals = marketSignalsObservationSchema.parse(observation);
+    const metadata = marketSignals.providerMetadata;
+    if (metadata.fallbackUsed) {
+      return `${marketSignals.conversationsAnalyzed} demo conversations · Gorilla degraded (${metadata.degradedReason ?? "provider_error"}) · fallback used`;
+    }
     const sign = marketSignals.negativeSentimentChangePct > 0 ? "+" : "";
-    return `${marketSignals.conversationsAnalyzed} conversations analyzed · negative sentiment ${sign}${marketSignals.negativeSentimentChangePct}%`;
+    const providerLabel =
+      metadata.provider === "gorilla" ? "real Gorilla conversations" : "demo conversations";
+    const partialLabel = metadata.partial ? " · partial" : "";
+    return `${marketSignals.conversationsAnalyzed} ${providerLabel}${partialLabel} · negative sentiment ${sign}${marketSignals.negativeSentimentChangePct}% (demo aggregate)`;
   }
   if (toolName === "get_sales_metrics" && observation) {
     const salesMetrics = salesMetricsObservationSchema.parse(observation);
     return `Sales ${formatCurrency(salesMetrics.previousSales)} → ${formatCurrency(salesMetrics.currentSales)} · change ${salesMetrics.changePct}%`;
   }
   return result.slice(0, 160);
+}
+
+function appendMarketProviderEvents(
+  events: AgentEvent[],
+  observation: MarketSignalsObservation,
+  sessionId: string,
+  nextSequence: () => number,
+  timestamp: number,
+) {
+  const metadata = observation.providerMetadata;
+  if (metadata.fallbackUsed) {
+    if (metadata.searchId) {
+      events.push(
+        createUiEvent(sessionId, nextSequence(), "signal_received", {
+          title: "Gorilla search_id generated",
+          description: metadata.searchId,
+          tool: { name: "search_market_signals", provider: "Gorilla" },
+          metadata: { searchId: metadata.searchId },
+          timestamp,
+        }),
+      );
+    }
+    events.push(
+      createUiEvent(sessionId, nextSequence(), "signal_received", {
+        title: "Gorilla degraded — demo fallback used",
+        description: `Provider outcome: ${metadata.degradedReason ?? "provider_error"}`,
+        tool: { name: "search_market_signals", provider: "Gorilla → Demo fallback" },
+        metadata: {
+          degraded: true,
+          fallbackUsed: true,
+          searchId: metadata.searchId,
+          errors: metadata.errors,
+        },
+        timestamp,
+      }),
+    );
+    return;
+  }
+  if (metadata.provider !== "gorilla") return;
+
+  events.push(
+    createUiEvent(sessionId, nextSequence(), "signal_received", {
+      title: "Gorilla search_id generated",
+      ...(metadata.searchId === undefined ? {} : { description: metadata.searchId }),
+      tool: { name: "search_market_signals", provider: "Gorilla" },
+      metadata: { searchId: metadata.searchId },
+      timestamp,
+    }),
+  );
+  for (const source of metadata.doneSources) {
+    events.push(
+      createUiEvent(sessionId, nextSequence(), "signal_received", {
+        title: `${gorillaSourceLabel(source)} completed`,
+        tool: { name: "search_market_signals", provider: "Gorilla" },
+        metadata: { source, searchId: metadata.searchId },
+        timestamp,
+      }),
+    );
+  }
+  events.push(
+    createUiEvent(sessionId, nextSequence(), "signal_received", {
+      title: `${metadata.realConversationCount} real conversations available`,
+      tool: { name: "search_market_signals", provider: "Gorilla" },
+      metadata: {
+        searchId: metadata.searchId,
+        partial: metadata.partial,
+        doneSources: metadata.doneSources,
+        pendingSources: metadata.pendingSources,
+        errors: metadata.errors,
+      },
+      timestamp,
+    }),
+  );
+  if (metadata.degraded) {
+    events.push(
+      createUiEvent(sessionId, nextSequence(), "signal_received", {
+        title: "Gorilla returned source-level errors",
+        description: "Successful source results were preserved.",
+        tool: { name: "search_market_signals", provider: "Gorilla" },
+        metadata: {
+          degraded: true,
+          searchId: metadata.searchId,
+          errors: metadata.errors,
+        },
+        timestamp,
+      }),
+    );
+  }
+  if (metadata.partial) {
+    events.push(
+      createUiEvent(sessionId, nextSequence(), "signal_received", {
+        title: "Gorilla partial results returned",
+        description: `${metadata.pendingSources.length} source(s) still pending`,
+        tool: { name: "search_market_signals", provider: "Gorilla" },
+        metadata: {
+          searchId: metadata.searchId,
+          doneSources: metadata.doneSources,
+          pendingSources: metadata.pendingSources,
+        },
+        timestamp,
+      }),
+    );
+  }
+}
+
+function gorillaSourceLabel(source: string) {
+  if (source === "twitter") return "X";
+  return toTitleCase(source);
 }
 
 function validateAndStoreObservation(
@@ -379,6 +553,9 @@ function missingEvidenceCategories(calledTools: Set<string>): MissingEvidenceCat
 }
 
 function evidencePolicyFollowUp(missing: MissingEvidenceCategory[]) {
+  if (missing.length === 2) {
+    return `Evidence policy not satisfied. You have not yet gathered ${missing.join(" and ")} evidence. The available evidence tools are independent; request both in the same turn when appropriate, choosing their arguments yourself, before concluding.`;
+  }
   return `Evidence policy not satisfied. You have not yet gathered ${missing.join(" and ")} evidence. Use the available tools to obtain the missing evidence before concluding.`;
 }
 
@@ -395,6 +572,30 @@ function urgencyLevelFor(score: number): Investigation["urgency"]["level"] {
   if (score >= 70) return "high";
   if (score >= 40) return "medium";
   return "low";
+}
+
+function positiveIntegerEnv(name: string, fallback: number) {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return fallback;
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    console.warn(`[VIU AI] Ignoring invalid ${name}; using ${fallback}ms.`);
+    return fallback;
+  }
+  return value;
+}
+
+function logDevelopmentTiming(
+  event: string,
+  metadata: Record<string, number | string | undefined>,
+) {
+  if (process.env["NODE_ENV"] !== "development") return;
+  const safeMetadata = Object.fromEntries(
+    Object.entries(metadata).filter((entry): entry is [string, number | string] => {
+      return entry[1] !== undefined;
+    }),
+  );
+  console.info(`[VIU AI timing] ${event}`, safeMetadata);
 }
 
 function formatCurrency(value: number) {

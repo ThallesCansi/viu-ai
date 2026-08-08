@@ -17,6 +17,7 @@ import { Route as IntegrationsRouteImport } from './routes/integrations'
 import { Route as ApiInvestigationsRouteImport } from './routes/api.investigations'
 import { Route as InvestigationsIndexRouteImport } from './routes/investigations.index'
 import { Route as InvestigationsInvestigationIdRouteImport } from './routes/investigations.$investigationId'
+import { Route as ApiVoiceSessionRouteImport } from './routes/api.voice.session'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -59,6 +60,11 @@ const InvestigationsInvestigationIdRoute =
     path: '/investigations/$investigationId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiVoiceSessionRoute = ApiVoiceSessionRouteImport.update({
+  id: '/api/voice/session',
+  path: '/api/voice/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/api/investigations': typeof ApiInvestigationsRoute
   '/investigations/$investigationId': typeof InvestigationsInvestigationIdRoute
   '/investigations/': typeof InvestigationsIndexRoute
+  '/api/voice/session': typeof ApiVoiceSessionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByTo {
   '/api/investigations': typeof ApiInvestigationsRoute
   '/investigations/$investigationId': typeof InvestigationsInvestigationIdRoute
   '/investigations': typeof InvestigationsIndexRoute
+  '/api/voice/session': typeof ApiVoiceSessionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/api/investigations': typeof ApiInvestigationsRoute
   '/investigations/$investigationId': typeof InvestigationsInvestigationIdRoute
   '/investigations/': typeof InvestigationsIndexRoute
+  '/api/voice/session': typeof ApiVoiceSessionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
     | '/api/investigations'
     | '/investigations/$investigationId'
     | '/investigations/'
+    | '/api/voice/session'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/api/investigations'
     | '/investigations/$investigationId'
     | '/investigations'
+    | '/api/voice/session'
   id:
     | '__root__'
     | '/'
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/api/investigations'
     | '/investigations/$investigationId'
     | '/investigations/'
+    | '/api/voice/session'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -133,6 +145,7 @@ export interface RootRouteChildren {
   ApiInvestigationsRoute: typeof ApiInvestigationsRoute
   InvestigationsInvestigationIdRoute: typeof InvestigationsInvestigationIdRoute
   InvestigationsIndexRoute: typeof InvestigationsIndexRoute
+  ApiVoiceSessionRoute: typeof ApiVoiceSessionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvestigationsInvestigationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/voice/session': {
+      id: '/api/voice/session'
+      path: '/api/voice/session'
+      fullPath: '/api/voice/session'
+      preLoaderRoute: typeof ApiVoiceSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -205,6 +225,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiInvestigationsRoute: ApiInvestigationsRoute,
   InvestigationsInvestigationIdRoute: InvestigationsInvestigationIdRoute,
   InvestigationsIndexRoute: InvestigationsIndexRoute,
+  ApiVoiceSessionRoute: ApiVoiceSessionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

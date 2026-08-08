@@ -1,6 +1,6 @@
 import { demoTranscript, meetingAgenda } from "@/data/demo";
 import type { ActionService, CalendarService, VoiceService } from "@/services/types";
-import type { AvailabilitySlot, FollowUpAction, VoiceState } from "@/types";
+import type { AvailabilitySlot, FollowUpAction, VoiceSessionSnapshot } from "@/types";
 import { followUpChecklist } from "@/data/demo";
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -34,36 +34,58 @@ export const mockCalendarService: CalendarService = {
 };
 
 /** ElevenLabs adapter stand-in. */
-class MockVoiceService implements VoiceService {
-  private listeners = new Set<(s: VoiceState) => void>();
+export class MockVoiceService implements VoiceService {
+  private listeners = new Set<(snapshot: VoiceSessionSnapshot) => void>();
   private timers: ReturnType<typeof setTimeout>[] = [];
+  private snapshot: VoiceSessionSnapshot = {
+    state: "ready",
+    active: false,
+    transcript: [],
+    error: null,
+  };
 
-  private set(state: VoiceState) {
-    this.listeners.forEach((l) => l(state));
+  private patch(next: Partial<VoiceSessionSnapshot>) {
+    this.snapshot = { ...this.snapshot, ...next };
+    this.listeners.forEach((listener) => listener(this.snapshot));
   }
 
-  subscribe(listener: (state: VoiceState) => void) {
+  subscribe(listener: (snapshot: VoiceSessionSnapshot) => void) {
     this.listeners.add(listener);
+    listener(this.snapshot);
     return () => this.listeners.delete(listener);
   }
 
-  async startSession() {
-    this.set("thinking");
-    this.timers.push(setTimeout(() => this.set("speaking"), 700));
-    this.timers.push(setTimeout(() => this.set("listening"), 6000));
-    this.timers.push(setTimeout(() => this.set("thinking"), 9000));
-    this.timers.push(setTimeout(() => this.set("speaking"), 10500));
-    this.timers.push(setTimeout(() => this.set("ready"), 17000));
-    return { sessionId: "voice-1", transcript: demoTranscript };
+  async startSession(input: Parameters<VoiceService["startSession"]>[0]) {
+    await this.stopSession();
+    this.patch({ state: "thinking", active: true, transcript: [], error: null });
+
+    this.timers.push(setTimeout(() => this.patch({ state: "speaking" }), 700));
+    demoTranscript.forEach((line, index) => {
+      this.timers.push(
+        setTimeout(
+          () => {
+            this.patch({ transcript: [...this.snapshot.transcript, line] });
+            const slideCount = input.getPresentation().slides.length;
+            input.onStageChange(Math.min(index, Math.max(0, slideCount - 1)));
+          },
+          index * 4200 + 900,
+        ),
+      );
+    });
+    this.timers.push(setTimeout(() => this.patch({ state: "listening" }), 6000));
+    this.timers.push(setTimeout(() => this.patch({ state: "thinking" }), 9000));
+    this.timers.push(setTimeout(() => this.patch({ state: "speaking" }), 10500));
+    this.timers.push(setTimeout(() => this.patch({ state: "ready", active: false }), 17000));
+    return { sessionId: "voice-mock-1" };
   }
 
   async stopSession() {
     this.timers.forEach(clearTimeout);
     this.timers = [];
-    this.set("ready");
+    this.patch({ state: "ready", active: false });
   }
 
-  async sendContext() {
+  async sendContext(_context: string) {
     /* no-op in mock */
   }
 }

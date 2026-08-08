@@ -1,17 +1,27 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Mic, MicOff, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { voiceService } from "@/services";
-import { demoTranscript } from "@/data/demo";
-import type { TranscriptLine, VoiceState } from "@/types";
+import { buildVoiceMeetingContext } from "@/services/presentation";
+import type {
+  CompanyPerson,
+  DecisionMeeting,
+  Investigation,
+  PresentationDeck,
+  VoiceSessionSnapshot,
+  VoiceState,
+} from "@/types";
 import { StatusDot } from "@/components/viu/primitives";
 
 const stateCopy: Record<VoiceState, { label: string; tone: "ok" | "agent" | "warn" | "danger" }> = {
   idle: { label: "Ready", tone: "ok" },
   ready: { label: "Ready", tone: "ok" },
+  connecting: { label: "Connecting", tone: "agent" },
   speaking: { label: "Speaking", tone: "agent" },
   listening: { label: "Listening", tone: "warn" },
   thinking: { label: "Thinking", tone: "agent" },
+  disconnected: { label: "Disconnected", tone: "warn" },
+  error: { label: "Voice error", tone: "danger" },
   unavailable: { label: "Voice unavailable", tone: "danger" },
 };
 
@@ -21,42 +31,62 @@ const stateCopy: Record<VoiceState, { label: string; tone: "ok" | "agent" | "war
  */
 export function VoiceAgent({
   onStageChange,
+  investigation,
+  presentation,
+  attendees,
+  meeting,
   className,
 }: {
-  onStageChange?: (stage: 0 | 1 | 2 | 3) => void;
+  onStageChange: (stage: number) => void;
+  investigation: Investigation;
+  presentation: PresentationDeck;
+  attendees?: CompanyPerson[];
+  meeting?: DecisionMeeting | null;
   className?: string;
 }) {
-  const [state, setState] = useState<VoiceState>("ready");
-  const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
-  const [active, setActive] = useState(false);
+  const [session, setSession] = useState<VoiceSessionSnapshot>({
+    state: "ready",
+    active: false,
+    transcript: [],
+    error: null,
+  });
+  const presentationRef = useRef(presentation);
+  presentationRef.current = presentation;
 
-  useEffect(() => voiceService.subscribe(setState), []);
+  useEffect(() => {
+    const unsubscribe = voiceService.subscribe(setSession);
+    return () => {
+      unsubscribe();
+      void voiceService.stopSession();
+    };
+  }, []);
 
   const bars = useMemo(() => Array.from({ length: 28 }, (_, i) => i), []);
-  const animated = state === "speaking" || state === "listening";
+  const animated = session.state === "speaking" || session.state === "listening";
 
   async function start() {
-    setActive(true);
-    setTranscript([]);
-    const session = await voiceService.startSession({ scenario: "onboarding-friction" });
-    const lines = session.transcript.length ? session.transcript : demoTranscript;
-    lines.forEach((line, i) => {
-      setTimeout(
-        () => {
-          setTranscript((prev) => [...prev, line]);
-          onStageChange?.(Math.min(3, i) as 0 | 1 | 2 | 3);
-        },
-        i * 4200 + 900,
-      );
+    const context = buildVoiceMeetingContext({
+      investigation,
+      presentation,
+      ...(attendees ? { attendees } : {}),
+      ...(meeting ? { meeting } : {}),
     });
+    try {
+      await voiceService.startSession({
+        context,
+        getPresentation: () => presentationRef.current,
+        onStageChange,
+      });
+    } catch {
+      // The service publishes a safe UI error. Slides and decisions remain available.
+    }
   }
 
   async function stop() {
     await voiceService.stopSession();
-    setActive(false);
   }
 
-  const copy = stateCopy[state];
+  const copy = stateCopy[session.state];
 
   return (
     <div className={cn("panel flex flex-col overflow-hidden", className)}>
@@ -68,16 +98,16 @@ export function VoiceAgent({
         </div>
         <button
           type="button"
-          onClick={() => (active ? void stop() : void start())}
+          onClick={() => (session.active ? void stop() : void start())}
           className={cn(
             "flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[12px] font-medium transition-colors",
-            active
+            session.active
               ? "border-danger/40 bg-danger-soft text-danger hover:bg-danger/20"
               : "border-agent/40 bg-agent-soft text-agent hover:bg-agent/20",
           )}
         >
-          {active ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-          {active ? "End session" : "Start voice briefing"}
+          {session.active ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+          {session.active ? "End session" : "Start AI presentation"}
         </button>
       </div>
 
@@ -98,14 +128,17 @@ export function VoiceAgent({
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3">
-        {transcript.length === 0 ? (
-          <div className="flex h-full items-center justify-center gap-2 py-6 text-[13px] text-muted-foreground">
-            <MicOff className="h-3.5 w-3.5" />
-            Transcript will appear here during the briefing.
+        {session.transcript.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 py-6 text-center text-[13px] text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <MicOff className="h-3.5 w-3.5" />
+              Transcript will appear here during the briefing.
+            </div>
+            {session.error && <p className="max-w-xs text-[12px] text-danger">{session.error}</p>}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {transcript.map((line) => (
+            {session.transcript.map((line) => (
               <div key={line.id} className="animate-rise">
                 <div
                   className={cn(

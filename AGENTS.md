@@ -32,9 +32,10 @@ captured → follow-up executed or monitored → monitoring resumes.
 
 For the first real vertical slice, the frontend calls `POST /api/investigations`.
 Open Agent Loops runs a Featherless-backed agent that decides whether to call the
-fake `search_market_signals()` and `get_sales_metrics()` tools and must gather
-validated evidence from both categories before concluding. Gorilla, Google
-Calendar, and ElevenLabs remain unintegrated until explicitly requested.
+Gorilla-backed `search_market_signals()` and fake `get_sales_metrics()` tools and
+must gather validated evidence from both categories before concluding. Gorilla
+keeps a deterministic fallback; ElevenLabs presents the derived, structured
+Decision Room deck with a mock voice fallback. Google Calendar remains unintegrated.
 
 ## Current architecture
 
@@ -99,11 +100,14 @@ coverage with new backend behavior and keep provider-backed live checks manual.
 
 - Open Agent Loops: server-only agent runner under `src/server/`.
 - Featherless: server-only model adapter/configuration used by the agent runner.
-- Gorilla: implementation behind the server-side `search_market_signals` tool.
+- Gorilla: bounded start-and-poll provider behind the server-side
+  `search_market_signals` tool, with explicit provenance and mock fallback.
 - Internal metrics: implementation behind `get_sales_metrics`.
 - Google Calendar: server-side calendar service/tool behind the existing contract.
-- ElevenLabs: server endpoint for short-lived voice session credentials, consumed
-  through the existing `VoiceService`; never ship its secret to the browser.
+- ElevenLabs: `VoiceService` starts the browser conversation from a public agent
+  ID or a short-lived signed URL returned by `GET /api/voice/session`; never ship
+  its secret to the browser. Voice receives a deck and grounded context, and is
+  not the investigation or slide-generation engine.
 - Frontend HTTP calls: adapters under `src/services/http/`, not page components.
 
 ## Business and observability rules
@@ -126,7 +130,8 @@ coverage with new backend behavior and keep provider-backed live checks manual.
 
 - Authentication, billing, user/workspace management, or complex settings.
 - A database, queue, or separate backend service for the first vertical slice.
-- Gorilla, Calendar, or ElevenLabs integration before explicitly requested.
+- Further Calendar or ElevenLabs knowledge-base/document ingestion work unless
+  explicitly requested.
 - CRM, Jira, Salesforce, social posting, PowerPoint, or video-avatar features.
 - Multiple demo scenarios, generic dashboards, or broad UI refactors.
 - Browser-side calls to credentialed LLM or data-provider APIs.

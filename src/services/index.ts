@@ -12,6 +12,7 @@ import {
   mockMarketSignalsService,
 } from "./mock/data-services";
 import { mockActionService, mockCalendarService, mockVoiceService } from "./mock/support-services";
+import { elevenLabsVoiceService } from "./elevenlabs/voice";
 
 export const marketSignalsService = config.useMockMarketSignals
   ? mockMarketSignalsService
@@ -23,7 +24,7 @@ export const agentService = config.useMockAgent ? mockAgentService : mockAgentSe
 
 export const calendarService = config.useMockCalendar ? mockCalendarService : mockCalendarService; // TODO: googleCalendarService
 
-export const voiceService = config.useMockVoice ? mockVoiceService : mockVoiceService; // TODO: elevenLabsVoiceService
+export const voiceService = config.useMockVoice ? mockVoiceService : elevenLabsVoiceService;
 
 export const companyDirectoryService = mockCompanyDirectoryService;
 
