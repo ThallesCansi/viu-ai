@@ -10,33 +10,116 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ActivityRouteImport } from './routes/activity'
+import { Route as DecisionRoomRouteImport } from './routes/decision-room'
+import { Route as DecisionsRouteImport } from './routes/decisions'
+import { Route as IntegrationsRouteImport } from './routes/integrations'
+import { Route as InvestigationsIndexRouteImport } from './routes/investigations.index'
+import { Route as InvestigationsInvestigationIdRouteImport } from './routes/investigations.$investigationId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActivityRoute = ActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DecisionRoomRoute = DecisionRoomRouteImport.update({
+  id: '/decision-room',
+  path: '/decision-room',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DecisionsRoute = DecisionsRouteImport.update({
+  id: '/decisions',
+  path: '/decisions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntegrationsRoute = IntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestigationsIndexRoute = InvestigationsIndexRouteImport.update({
+  id: '/investigations/',
+  path: '/investigations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestigationsInvestigationIdRoute =
+  InvestigationsInvestigationIdRouteImport.update({
+    id: '/investigations/$investigationId',
+    path: '/investigations/$investigationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
+  '/decision-room': typeof DecisionRoomRoute
+  '/decisions': typeof DecisionsRoute
+  '/integrations': typeof IntegrationsRoute
+  '/investigations/$investigationId': typeof InvestigationsInvestigationIdRoute
+  '/investigations/': typeof InvestigationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
+  '/decision-room': typeof DecisionRoomRoute
+  '/decisions': typeof DecisionsRoute
+  '/integrations': typeof IntegrationsRoute
+  '/investigations/$investigationId': typeof InvestigationsInvestigationIdRoute
+  '/investigations': typeof InvestigationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
+  '/decision-room': typeof DecisionRoomRoute
+  '/decisions': typeof DecisionsRoute
+  '/integrations': typeof IntegrationsRoute
+  '/investigations/$investigationId': typeof InvestigationsInvestigationIdRoute
+  '/investigations/': typeof InvestigationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/activity'
+    | '/decision-room'
+    | '/decisions'
+    | '/integrations'
+    | '/investigations/$investigationId'
+    | '/investigations/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/activity'
+    | '/decision-room'
+    | '/decisions'
+    | '/integrations'
+    | '/investigations/$investigationId'
+    | '/investigations'
+  id:
+    | '__root__'
+    | '/'
+    | '/activity'
+    | '/decision-room'
+    | '/decisions'
+    | '/integrations'
+    | '/investigations/$investigationId'
+    | '/investigations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivityRoute: typeof ActivityRoute
+  DecisionRoomRoute: typeof DecisionRoomRoute
+  DecisionsRoute: typeof DecisionsRoute
+  IntegrationsRoute: typeof IntegrationsRoute
+  InvestigationsInvestigationIdRoute: typeof InvestigationsInvestigationIdRoute
+  InvestigationsIndexRoute: typeof InvestigationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +131,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/decision-room': {
+      id: '/decision-room'
+      path: '/decision-room'
+      fullPath: '/decision-room'
+      preLoaderRoute: typeof DecisionRoomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/decisions': {
+      id: '/decisions'
+      path: '/decisions'
+      fullPath: '/decisions'
+      preLoaderRoute: typeof DecisionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integrations': {
+      id: '/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof IntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/investigations/': {
+      id: '/investigations/'
+      path: '/investigations'
+      fullPath: '/investigations/'
+      preLoaderRoute: typeof InvestigationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/investigations/$investigationId': {
+      id: '/investigations/$investigationId'
+      path: '/investigations/$investigationId'
+      fullPath: '/investigations/$investigationId'
+      preLoaderRoute: typeof InvestigationsInvestigationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivityRoute: ActivityRoute,
+  DecisionRoomRoute: DecisionRoomRoute,
+  DecisionsRoute: DecisionsRoute,
+  IntegrationsRoute: IntegrationsRoute,
+  InvestigationsInvestigationIdRoute: InvestigationsInvestigationIdRoute,
+  InvestigationsIndexRoute: InvestigationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
