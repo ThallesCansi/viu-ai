@@ -7,6 +7,7 @@ import { VoiceAgent } from "@/components/viu/VoiceAgent";
 import { EvidenceDrawer } from "@/components/viu/EvidenceDrawer";
 import { PresentationSlideView } from "@/components/viu/PresentationSlideView";
 import { clampPresentationStage, getSlideNavigation } from "@/services/presentation";
+import { guacoDecisionPlan } from "@/data/guaco";
 import type { PresentationStage } from "@/types";
 
 export const Route = createFileRoute("/decision-room")({
@@ -175,9 +176,9 @@ function DecisionRoom() {
                 {investigation.recommendation}
               </p>
               <div className="mt-5 flex flex-wrap gap-10">
-                <Tile label="Owner" value="Pedro Lima" />
-                <Tile label="Primary metric" value="Onboarding completion rate" />
-                <Tile label="Duration" value="14 days" />
+                <Tile label="Owner" value={guacoDecisionPlan.owner} />
+                <Tile label="Primary metric" value={guacoDecisionPlan.primaryMetric} />
+                <Tile label="Duration" value={guacoDecisionPlan.durationLabel} />
               </div>
               <div className="mt-4">
                 <SectionLabel>Secondary metrics</SectionLabel>
@@ -262,7 +263,7 @@ function DecisionRoom() {
                   {status === "monitoring_outcome" && (
                     <p className="mt-3 text-[12px] text-muted-foreground">
                       Monitoring will continue automatically. Next decision checkpoint:{" "}
-                      <span className="text-foreground">14 days</span>.
+                      <span className="text-foreground">{guacoDecisionPlan.durationLabel}</span>.
                     </p>
                   )}
                 </>

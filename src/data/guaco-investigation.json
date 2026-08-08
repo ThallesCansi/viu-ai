@@ -16,13 +16,40 @@
     "hypothesis": "Campinas combina sinal social recente favorável com desempenho interno simulado mais forte; creators e advocacy local podem ser uma alavanca replicável no Grande ABC.",
     "languageQualifier": "correlation",
     "confidence": 68,
-    "urgency": { "score": 54, "level": "medium" },
+    "urgency": {
+      "score": 54,
+      "level": "medium"
+    },
     "summary": "O snapshot social não indica crise: Campinas concentra sinais públicos recentes favoráveis, enquanto dados internos simulados mostram crescimento de 11.3% de maio a agosto. No Grande ABC, a receita simulada ainda está 11.4% abaixo da meta de agosto. A recomendação é testar uma ativação regional rastreável, sem assumir causalidade.",
     "clusters": [
-      { "topic": "Campinas — menções recentes", "count": 3, "changePct": 0, "sentiment": "positive", "relevanceScore": 0.91 },
-      { "topic": "Grande ABC — inauguração", "count": 1, "changePct": 0, "sentiment": "neutral", "relevanceScore": 0.74 },
-      { "topic": "Creator reviews (histórico)", "count": 5, "changePct": 0, "sentiment": "positive", "relevanceScore": 0.62 },
-      { "topic": "Negativas explícitas", "count": 0, "changePct": 0, "sentiment": "negative", "relevanceScore": 0.1 }
+      {
+        "topic": "Campinas — menções recentes",
+        "count": 3,
+        "changePct": 0,
+        "sentiment": "positive",
+        "relevanceScore": 0.91
+      },
+      {
+        "topic": "Grande ABC — inauguração",
+        "count": 1,
+        "changePct": 0,
+        "sentiment": "neutral",
+        "relevanceScore": 0.74
+      },
+      {
+        "topic": "Creator reviews (histórico)",
+        "count": 5,
+        "changePct": 0,
+        "sentiment": "positive",
+        "relevanceScore": 0.62
+      },
+      {
+        "topic": "Negativas explícitas",
+        "count": 0,
+        "changePct": 0,
+        "sentiment": "negative",
+        "relevanceScore": 0.1
+      }
     ],
     "evidence": [
       {
@@ -112,10 +139,26 @@
         "headline": "Campinas concentra os sinais públicos recentes mais fortes da marca.",
         "body": "A coleta não sustenta uma crise de reputação. O sinal mais claro é uma oportunidade regional que merece investigação.",
         "metrics": [
-          { "label": "Menções recentes relevantes", "value": "4", "tone": "agent" },
-          { "label": "Menções recentes em Campinas", "value": "3", "tone": "ok" },
-          { "label": "Negativas explícitas na amostra recente", "value": "0", "tone": "neutral" },
-          { "label": "Engajamento recente (proxy)", "value": "5.599", "tone": "agent" }
+          {
+            "label": "Menções recentes relevantes",
+            "value": "4",
+            "tone": "agent"
+          },
+          {
+            "label": "Menções recentes em Campinas",
+            "value": "3",
+            "tone": "ok"
+          },
+          {
+            "label": "Negativas explícitas na amostra recente",
+            "value": "0",
+            "tone": "neutral"
+          },
+          {
+            "label": "Engajamento recente (proxy)",
+            "value": "5.599",
+            "tone": "agent"
+          }
         ],
         "speakerNotes": "Explique que a amostra recente é pequena e que o agente optou por não inventar uma crise. Destaque que Campinas aparece de forma recorrente nos sinais recentes."
       },
@@ -129,7 +172,12 @@
           "YouTube, 11 semanas: inauguração no Grande ABC - 2.511 pontos.",
           "Histórico: creator review \"O MELHOR MEXICANO QUE JÁ COMI\" - 477.021 pontos e 147 comentários."
         ],
-        "evidenceIds": ["social-001", "social-008", "social-006", "social-002"],
+        "evidenceIds": [
+          "social-001",
+          "social-008",
+          "social-006",
+          "social-002"
+        ],
         "speakerNotes": "Diferencie conteúdo recente de referências históricas. Os grandes números históricos mostram potencial de creators, não uma tendência atual."
       },
       {
@@ -138,9 +186,21 @@
         "headline": "O desempenho simulado reforça a pergunta: o que Campinas faz que pode ser replicado no Grande ABC?",
         "body": "Dados internos deste slide são simulados exclusivamente para a demonstração.",
         "metrics": [
-          { "label": "Campinas: maio → agosto", "value": "+11.3%", "tone": "ok" },
-          { "label": "Grande ABC: vs. meta de agosto", "value": "-11.4%", "tone": "warn" },
-          { "label": "São Paulo: maio → agosto", "value": "+1.9%", "tone": "neutral" }
+          {
+            "label": "Campinas: maio → agosto",
+            "value": "+11.3%",
+            "tone": "ok"
+          },
+          {
+            "label": "Grande ABC: vs. meta de agosto",
+            "value": "-11.4%",
+            "tone": "warn"
+          },
+          {
+            "label": "São Paulo: maio → agosto",
+            "value": "+1.9%",
+            "tone": "neutral"
+          }
         ],
         "bullets": [
           "Campinas cresce no período simulado e também concentra sinais sociais recentes.",
@@ -172,5 +232,17 @@
     "resumo_executivo": "O snapshot social não indica crise: Campinas concentra sinais públicos recentes favoráveis, enquanto dados internos simulados mostram crescimento de 11.3% de maio a agosto. No Grande ABC, a receita simulada ainda está 11.4% abaixo da meta de agosto. A recomendação é testar uma ativação regional rastreável, sem assumir causalidade.",
     "contexto_detalhado": "DEMO VIU AI - GUA.CO\n\nIMPORTANTE SOBRE OS DADOS\n- Dados sociais: públicos, extraídos do HTML exportado do Gorilla fornecido para a demo.\n- Dados internos de vendas/finanças: totalmente simulados para o hackathon.\n- Não existe afiliação entre VIU AI e GUA.CO.\n- A análise não afirma causalidade entre redes sociais e vendas.\n\nQUALIDADE DA COLETA SOCIAL\nO HTML informa 257 resultados e indica que o Reddit ainda estava carregando. O arquivo contém 50 registros exportáveis; após filtragem de falsos positivos, foram retidas 11 evidências explicitamente relacionadas à marca. A busca tem ruído porque \"guaco\" pode significar planta, banda ou restaurantes de outros países.\n\nSINAIS RECENTES (ATÉ 26 SEMANAS)\n- 4 menções independentes/promocionais recentes ligadas à marca.\n- Campinas aparece em 3 delas; Grande ABC em 1 (inauguração).\n- Proxy de engajamento recente: 5.599 pontos; 6 comentários.\n- Nenhuma menção explicitamente negativa na amostra recente.\n\nEVIDÊNCIAS-CHAVE\n1. YouTube - Pitta Por Ai - \"Guaco - Campinas\" - 3.052 pontos - 11 semanas.\n2. YouTube - Carol Martí - \"Nossa primeira vez no GUACO\" - Campinas - 24 semanas.\n3. Bluesky - \"pra mim nada supera o GUA.CO de campinas\" - 22 semanas.\n4. YouTube - GUIA GRANDE ABC - inauguração no ABC - 2.511 pontos - 11 semanas.\n5. Histórico: \"O MELHOR MEXICANO QUE JÁ COMI\" - 477.021 pontos - 169 semanas.\n6. Histórico: \"o MEGA BURRITO de 70CM!!\" - 461.225 pontos - 65 semanas.\n\nDADOS INTERNOS SIMULADOS\nCampinas: R$ 558.839 (mai/2026) -> R$ 621.710 (ago/2026), +11.3%.\nGrande ABC: R$ 247.950 em agosto contra meta de R$ 280.000, -11.4%.\nSão Paulo: +1.9% de maio a agosto.\n\nHIPÓTESE DE TRABALHO\nCampinas combina sinal social qualitativamente favorável com desempenho interno simulado mais forte. Isso NÃO demonstra causalidade. A hipótese a testar é que creators e advocacy local podem ser alavanca de awareness e conversão replicável no Grande ABC.\n\nRECOMENDAÇÃO\n1. Experimento regional de 4 semanas no Grande ABC com creators locais e códigos rastreáveis.\n2. Campinas como benchmark operacional e de mensagem.\n3. Acompanhar vendas, pedidos, ticket médio, cancelamento e atraso semanalmente.\n4. Comparar com região de controle.\n5. Recoletar sinais sociais com query mais restrita antes de automatizar alertas.\n\nOBJETIVO DA REUNIÃO\nDecidir se vale executar o teste regional para converter awareness social em crescimento mensurável no Grande ABC.",
     "disclaimer": "Dados sociais públicos via Gorilla; dados internos/financeiros totalmente simulados para a demo."
+  },
+  "decisionPlan": {
+    "owner": "Marketing / Growth",
+    "primaryMetric": "Pedidos incrementais no Grande ABC",
+    "secondaryMetrics": [
+      "Receita vs. meta",
+      "Ticket médio",
+      "Novos clientes atribuídos"
+    ],
+    "durationDays": 28,
+    "durationLabel": "4 semanas",
+    "proposedAction": "Executar um experimento regional de 4 semanas no Grande ABC com creators locais e códigos rastreáveis, usando Campinas como benchmark e uma região de controle."
   }
 }
