@@ -489,7 +489,7 @@ class MockAgentEngine implements AgentService {
           idx === i ? { ...f, status: "complete" } : idx === i + 1 ? { ...f, status: "running" } : f,
         ),
       });
-      this.emit("action_created", followUps[i].label);
+      this.emit("action_created", followUps[i]?.label ?? "Follow-up action created");
     }
     await sleep(600);
     this.patch({ status: "monitoring_outcome" });
