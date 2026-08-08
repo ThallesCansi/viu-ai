@@ -22,7 +22,7 @@ import {
   clampPresentationStage,
   resolvePresentationDeck,
 } from "@/services/presentation";
-import { guacoInvestigation } from "@/data/guaco";
+import { guacoDecisionPlan, guacoInvestigation } from "@/data/guaco";
 import type { AgentService, AgentSnapshot } from "@/services/types";
 import type {
   AgentEvent,
@@ -509,18 +509,18 @@ class MockAgentEngine implements AgentService {
       status: outcome === "rejected" ? ("rejected" as const) : ("active" as const),
       triggeredBy: "Market anomaly",
       decision: "Simplify onboarding verification",
-      proposedAction: PROPOSED_ACTION,
-      owner: "Pedro Lima",
-      primaryMetric: "Onboarding completion rate",
-      secondaryMetrics: ["Trial conversion", "Negative onboarding sentiment"],
-      durationDays: 14,
+      proposedAction: guacoDecisionPlan.proposedAction,
+      owner: guacoDecisionPlan.owner,
+      primaryMetric: guacoDecisionPlan.primaryMetric,
+      secondaryMetrics: guacoDecisionPlan.secondaryMetrics,
+      durationDays: guacoDecisionPlan.durationDays,
       createdAt: "Today",
       followUpInDays: 14,
       outcome,
     };
     this.patch({ status: "awaiting_decision", decision });
     this.emit("decision_recorded", `Decision recorded: ${outcome}`, {
-      description: PROPOSED_ACTION,
+      description: guacoDecisionPlan.proposedAction,
     });
 
     if (outcome === "rejected") {
@@ -547,7 +547,10 @@ class MockAgentEngine implements AgentService {
     }
     await sleep(600);
     this.patch({ status: "monitoring_outcome" });
-    this.emit("monitoring_resumed", "Monitoring resumed — next checkpoint in 14 days");
+    this.emit(
+      "monitoring_resumed",
+      `Monitoring resumed — next checkpoint in ${guacoDecisionPlan.durationLabel}`,
+    );
     this.busy = false;
   }
 

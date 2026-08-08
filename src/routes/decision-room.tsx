@@ -183,8 +183,11 @@ function DecisionRoom() {
               <div className="mt-4">
                 <SectionLabel>Secondary metrics</SectionLabel>
                 <div className="mt-1.5 flex gap-2">
-                  <Chip tone="muted">Trial conversion</Chip>
-                  <Chip tone="muted">Negative onboarding sentiment</Chip>
+                  {guacoDecisionPlan.secondaryMetrics.map((metric) => (
+                    <Chip key={metric} tone="muted">
+                      {metric}
+                    </Chip>
+                  ))}
                 </div>
               </div>
 
