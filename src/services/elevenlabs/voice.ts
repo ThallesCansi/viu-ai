@@ -57,7 +57,7 @@ export class ElevenLabsVoiceService implements VoiceService {
       const sessionAuthorization =
         authorization.authorization === "signed_url"
           ? ({ signedUrl: authorization.signedUrl, connectionType: "websocket" } as const)
-          : ({ agentId: authorization.agentId } as const);
+          : ({ agentId: authorization.agentId, connectionType: "websocket" } as const);
 
       const options: PartialOptions = {
         ...sessionAuthorization,
