@@ -9,6 +9,7 @@ import {
   changePresentationSlide,
   clampPresentationStage,
   getSlideNavigation,
+  normalizePresentationSlideNumber,
 } from "@/services/presentation";
 import type { Investigation, PresentationDeck } from "@/types";
 
@@ -112,8 +113,19 @@ describe("presentation adapter", () => {
       changePresentationSlide({ slide_number: 3 }, pricingDeck, (stage) => selected.push(stage)),
     ).toBe("Slide 3 displayed");
     expect(selected).toEqual([2]);
+    expect(
+      changePresentationSlide({ slide_number: "3" }, pricingDeck, (stage) => selected.push(stage)),
+    ).toBe("Slide 3 displayed");
+    expect(selected).toEqual([2, 2]);
     expect(changePresentationSlide({ slide_number: 4 }, pricingDeck, () => undefined)).toBe(
       "Invalid slide number. This presentation has 3 slides.",
     );
+    for (const invalid of [3.5, "3.5", Number.NaN, 0, "0", -1, "-1", "NaN", "3e0"]) {
+      expect(changePresentationSlide({ slide_number: invalid }, pricingDeck, () => undefined)).toBe(
+        "Invalid slide number. This presentation has 3 slides.",
+      );
+    }
+    expect(normalizePresentationSlideNumber(3)).toBe(3);
+    expect(normalizePresentationSlideNumber("3")).toBe(3);
   });
 });

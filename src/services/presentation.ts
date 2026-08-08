@@ -234,15 +234,22 @@ export function changePresentationSlide(
   presentation: PresentationDeck,
   onStageChange: (stage: number) => void,
 ): string {
-  const slideNumber = params.slide_number;
-  if (
-    !Number.isInteger(slideNumber) ||
-    (slideNumber as number) < 1 ||
-    (slideNumber as number) > presentation.slides.length
-  ) {
+  const slideNumber = normalizePresentationSlideNumber(params.slide_number);
+  if (slideNumber === null || slideNumber < 1 || slideNumber > presentation.slides.length) {
     return `Invalid slide number. This presentation has ${presentation.slides.length} slides.`;
   }
 
-  onStageChange((slideNumber as number) - 1);
-  return `Slide ${slideNumber as number} displayed`;
+  onStageChange(slideNumber - 1);
+  return `Slide ${slideNumber} displayed`;
+}
+
+export function normalizePresentationSlideNumber(value: unknown): number | null {
+  if (typeof value === "number") return Number.isSafeInteger(value) ? value : null;
+  if (typeof value !== "string") return null;
+
+  const normalized = value.trim();
+  if (!/^-?\d+$/.test(normalized)) return null;
+
+  const parsed = Number(normalized);
+  return Number.isSafeInteger(parsed) ? parsed : null;
 }

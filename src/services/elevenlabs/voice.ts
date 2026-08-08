@@ -1,6 +1,9 @@
 import type { Conversation as ElevenLabsConversation, PartialOptions } from "@elevenlabs/react";
 
-import { changePresentationSlide } from "@/services/presentation";
+import {
+  changePresentationSlide,
+  normalizePresentationSlideNumber,
+} from "@/services/presentation";
 import type { VoiceService } from "@/services/types";
 import type { TranscriptLine, VoiceSessionSnapshot } from "@/types";
 
@@ -60,8 +63,32 @@ export class ElevenLabsVoiceService implements VoiceService {
         ...sessionAuthorization,
         dynamicVariables: { ...input.context },
         clientTools: {
-          change_slide: (parameters: { slide_number?: unknown }) =>
-            changePresentationSlide(parameters, input.getPresentation(), input.onStageChange),
+          change_slide: (parameters: { slide_number?: unknown }) => {
+            const rawSlideNumber = parameters.slide_number;
+            const presentation = input.getPresentation();
+            if (import.meta.env.DEV) {
+              console.info("[VIU Voice] change_slide requested", {
+                raw_slide_number: rawSlideNumber,
+                slide_number_type: typeof rawSlideNumber,
+                presentation_slides_length: presentation.slides.length,
+              });
+            }
+
+            let resultingStage: number | null = null;
+            const result = changePresentationSlide(parameters, presentation, (stage) => {
+              resultingStage = stage;
+              input.onStageChange(stage);
+            });
+
+            if (import.meta.env.DEV) {
+              console.info("[VIU Voice] change_slide result", {
+                normalized_slide_number: normalizePresentationSlideNumber(rawSlideNumber),
+                result,
+                resulting_stage: resultingStage,
+              });
+            }
+            return result;
+          },
         },
         onConnect: () => this.patch({ state: "listening", active: true }),
         onDisconnect: (details) => {
