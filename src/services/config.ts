@@ -11,9 +11,9 @@
  * Every flag defaults to `true` so the hackathon demo always runs.
  */
 
-const flag = (key: string) => {
+const flag = (key: string, fallback = true) => {
   const raw = (import.meta.env as Record<string, string | undefined>)[key];
-  return raw === undefined ? true : raw !== "false";
+  return raw === undefined ? fallback : raw !== "false";
 };
 
 export const config = {
@@ -22,7 +22,9 @@ export const config = {
   useMockMarketSignals: flag("VITE_USE_MOCK_MARKET_SIGNALS"),
   useMockAgent: flag("VITE_USE_MOCK_AGENT"),
   useMockCalendar: flag("VITE_USE_MOCK_CALENDAR"),
-  useMockVoice: flag("VITE_USE_MOCK_VOICE"),
+  // The ElevenLabs agent is public, so real voice works without any secret.
+  // Default to the real voice service even when no .env file is present (published builds).
+  useMockVoice: flag("VITE_USE_MOCK_VOICE", false),
   elevenLabsAgentId:
     (import.meta.env as Record<string, string | undefined>)["VITE_ELEVENLABS_AGENT_ID"] ??
     "agent_2301kzh07enpe3zt2ph7mbznsxf7",
