@@ -1,6 +1,6 @@
 <div align="center">
 
-# VIU AI
+# Viu AI
 
 ### Agente autônomo para inteligência, marketing e resposta ao mercado
 
@@ -16,11 +16,9 @@
 
 Empresas já possuem dashboards, social listening, analytics, CRM e ferramentas de marketing. O problema é que essas informações continuam fragmentadas — e quase sempre ainda existe uma pessoa responsável por perceber o que mudou, investigar o motivo, decidir o que fazer e acompanhar o resultado.
 
-A **VIU AI** nasceu para explorar uma ideia diferente: e se uma IA não apenas mostrasse o que está acontecendo, mas **assumisse responsabilidade por responder ao mercado dentro de limites definidos pela empresa?**
+A **Viu AI** nasceu para explorar uma ideia diferente: e se uma IA não apenas mostrasse o que está acontecendo, mas **assumisse responsabilidade por responder ao mercado dentro de limites definidos pela empresa?**
 
 O protótipo demonstra um agente autônomo capaz de monitorar sinais internos e externos, detectar anomalias, investigar evidências, construir uma hipótese, avaliar urgência, acionar ferramentas, preparar uma decisão e acompanhar o que acontece depois.
-
-> **Não é só um dashboard com IA. É um agente operando dentro da empresa.**
 
 ---
 
@@ -30,15 +28,17 @@ O mercado se move rápido. Tendências aparecem, narrativas crescem, clientes mu
 
 As ferramentas atuais ajudam a **ouvir**, **analisar** ou **executar**, mas essas etapas normalmente continuam separadas. A consequência é uma grande latência entre o primeiro sinal e a ação da empresa.
 
-A VIU AI foi pensada para reduzir essa distância.
+A Viu AI foi pensada para reduzir essa distância.
 
 ---
 
-## Como a VIU AI funciona
+## Como a Viu AI funciona
+
+O agente opera em um **closed loop**:
 
 ```mermaid
 flowchart LR
-    A[Sinais de mercado] --> C[VIU AI]
+    A[Sinais de mercado] --> C[Viu AI]
     B[Dados internos] --> C
     C --> D[Detecta]
     D --> E[Investiga]
@@ -47,19 +47,6 @@ flowchart LR
     G --> H[Mede o resultado]
     H --> C
 ```
-
-O agente opera em um **closed loop**:
-
-1. monitora sinais continuamente;
-2. detecta uma mudança relevante;
-3. escolhe autonomamente quais ferramentas e dados consultar;
-4. cruza evidências externas com métricas internas;
-5. constrói uma hipótese sem assumir causalidade indevida;
-6. calcula confiança e urgência;
-7. decide se pode agir ou se precisa escalar para humanos;
-8. prepara a decisão e acompanha o follow-up;
-9. volta a monitorar o resultado.
-
 ---
 
 ## O que o protótipo demonstra
@@ -82,7 +69,7 @@ A interface expõe ações observáveis do agente — ferramentas chamadas, sina
 
 ### 🎙️ Decision Room com voz
 
-Quando uma decisão humana é necessária, a VIU AI prepara uma **Decision Room**: apresenta a investigação, mostra as evidências e permite uma interação por voz com o agente. A camada de voz foi construída para integração com **ElevenLabs**.
+Quando uma decisão humana é necessária, a Viu AI prepara uma **Decision Room**: apresenta a investigação, mostra as evidências e permite uma interação por voz com o agente. A camada de voz foi construída para integração com **ElevenLabs**.
 
 ### 🔁 Follow-up
 
@@ -92,11 +79,11 @@ Depois da decisão, o sistema registra ações e continua monitorando o resultad
 
 ## Fluxo da demo
 
-Durante a demonstração, a VIU AI identifica uma anomalia, inicia a investigação automaticamente e começa a consultar suas ferramentas.
+Durante a demonstração, a Viu AI identifica uma anomalia, inicia a investigação automaticamente e começa a consultar suas ferramentas.
 
 Ela encontra sinais relevantes, compara com métricas internas, agrupa evidências, calcula confiança e urgência e produz uma recomendação. Caso o cenário exija decisão humana, o agente abre a **Decision Room**, apresenta o caso por voz e registra a decisão tomada.
 
-A partir daí, a VIU AI executa ou acompanha os próximos passos e retorna ao estado de monitoramento.
+A partir daí, a Viu AI executa ou acompanha os próximos passos e retorna ao estado de monitoramento.
 
 ---
 
@@ -161,8 +148,8 @@ Autonomous Agent
 ### Instalação
 
 ```bash
-git clone https://github.com/ThallesCansi/viu-ai.git
-cd viu-ai
+git clone https://github.com/ThallesCansi/Viu-ai.git
+cd Viu-ai
 npm install
 npm run dev
 ```
@@ -206,30 +193,41 @@ npm run typecheck  # verificação TypeScript
 
 ## Visão
 
-A versão criada no Hack2L explora **Market Intelligence** e tomada de decisão. A visão da VIU AI é evoluir para um **gestor autônomo de resposta ao mercado**, capaz de operar principalmente em dois modos:
+A versão criada no Hack2L explora **Market Intelligence** e tomada de decisão. A visão da Viu AI é evoluir para um **gestor autônomo de resposta ao mercado**, capaz de operar principalmente em dois modos:
 
 **Growth** — identificar tendências e oportunidades, criar experimentos de marketing, medir resultados e otimizar ações.
 
 **Risk** — detectar mudanças de percepção, narrativas negativas e riscos reputacionais, responder dentro de limites pré-definidos e escalar apenas decisões sensíveis.
 
-A empresa define objetivos, identidade, orçamento e limites de autonomia. A VIU AI trabalha dentro desse mandato.
+A empresa define objetivos, identidade, orçamento e limites de autonomia. A Viu AI trabalha dentro desse mandato.
 
 ---
 
 ## Hack2L
 
-A VIU AI foi concebida e prototipada durante o **Hack2L**, promovido pela **Liga Jovem da Unicamp** e pela **Canastra Ventures**.
+A Viu AI foi concebida e prototipada durante o **Hack2L**, promovido pela **Liga Jovem da Unicamp** e pela **Canastra Ventures**.
 
 O desafio era demonstrar uma aplicação de IA verdadeiramente **autônoma e closed-loop**. Em vez de construir mais um copiloto que espera comandos, buscamos criar a experiência de um agente que observa o ambiente, toma iniciativa, usa ferramentas e conduz um processo até uma decisão.
 
-🏆 **A VIU AI foi o projeto vencedor do hackathon.**
+🏆 **A Viu AI foi o projeto vencedor do hackathon.**
 
 ---
 
+### Time
+
+- **João Souza** — Produto / Estratégia
+- **Thalles Cansi** — Desenvolvimento / IA
+- **Rafael Anis** — Desenvolvimento / Integração
+- **Caio Ruas** — Design / Produto
+
+Durante o hackathon, trabalhamos juntos na concepção do produto, desenvolvimento do protótipo, arquitetura do agente e construção do pitch que levou a VIU AI ao primeiro lugar.
+
+> Construído em poucas horas, validado no palco e vencedor do Hack2L. 🏆
+
 <div align="center">
 
-### VIU AI
+### Viu AI
 
-**Do sinal à ação.**
+**Viu aí, como está o mercado?.**
 
 </div>
