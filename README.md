@@ -6,7 +6,7 @@
 
 **Percebe sinais. Investiga. Decide. Age. Mede. Aprende.**
 
-🏆 **Projeto vencedor do Hack2L**, hackathon promovido pela **Liga Jovem da Unicamp** e pela **Canastra Ventures**.
+🏆 **Projeto vencedor do [Hack2L](https://hackathons.canastra.ventures/projects/viu-ai-capithon)**, hackathon promovido pela **Liga Jovem da Unicamp** e pela **Canastra Ventures**.
 
 </div>
 
@@ -228,6 +228,6 @@ Durante o hackathon, trabalhamos juntos na concepção do produto, desenvolvimen
 
 ### Viu AI
 
-**Viu aí, como está o mercado?.**
+**Viu aí, como está o mercado?**
 
 </div>
